@@ -1,15 +1,17 @@
 import tkinter as tk
 from tkinter import ttk
+from transaction_form import TransactionForm
+from views import PropertyView
 
 class BlockchainTab(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        # Add components for the blockchain tab here
-        label = tk.Label(self, text="Blockchain Functionality Will Go Here")
-        label.pack(pady=20)
+        self.inner_notebook = ttk.Notebook(self)
+        self.inner_notebook.pack(expand=True, fill='both')
 
-    def start_functionality(self):
-        # This is where the blockchain functionality will be triggered
-        print("Blockchain functionality will be implemented here.")
-        # You can call your partner's blockchain methods here once ready
+        self.transaction_form = TransactionForm(self.inner_notebook)
+        self.inner_notebook.add(self.transaction_form, text="Add Transaction")
+        
+        self.property_view = PropertyView(self.inner_notebook)
+        self.inner_notebook.add(self.property_view, text="View Properties")

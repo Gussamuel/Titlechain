@@ -1,4 +1,0 @@
-([('GUI',
-   '/Users/sam/Library/Mobile Documents/com~apple~CloudDocs/Coding '
-   'Projects/Titlechain/Titlechain/dist/GUI',
-   'EXECUTABLE')],)
