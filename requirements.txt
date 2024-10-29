@@ -1,0 +1,4 @@
+Flask==2.3.2
+Flask-CORS==3.0.10
+requests==2.31.0
+ecdsa==0.18.0
