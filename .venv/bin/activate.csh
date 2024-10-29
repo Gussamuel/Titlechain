@@ -10,7 +10,7 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV '/Users/sam/Library/Mobile Documents/com~apple~CloudDocs/Coding Projects/Titlechain/Titlechain/.venv'
+setenv VIRTUAL_ENV /Users/sam/Desktop/Titlechain/.venv
 
 set _OLD_VIRTUAL_PATH="$PATH:q"
 setenv PATH "$VIRTUAL_ENV:q/"bin":$PATH:q"

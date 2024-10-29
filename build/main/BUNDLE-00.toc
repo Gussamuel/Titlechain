@@ -1,4 +1,1 @@
-([('main',
-   '/Users/sam/Library/Mobile Documents/com~apple~CloudDocs/Coding '
-   'Projects/Titlechain/Titlechain/dist/main',
-   'EXECUTABLE')],)
+([('main', '/Users/sam/Desktop/Titlechain/dist/main', 'EXECUTABLE')],)

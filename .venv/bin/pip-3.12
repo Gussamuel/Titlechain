@@ -1,6 +1,4 @@
-#!/bin/sh
-'''exec' "/Users/sam/Library/Mobile Documents/com~apple~CloudDocs/Coding Projects/Titlechain/Titlechain/.venv/bin/python" "$0" "$@"
-' '''
+#!/Users/sam/Desktop/Titlechain/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

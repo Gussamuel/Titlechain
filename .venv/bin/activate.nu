@@ -32,7 +32,7 @@ export-env {
       }
     }
 
-    let virtual_env = r#'/Users/sam/Library/Mobile Documents/com~apple~CloudDocs/Coding Projects/Titlechain/Titlechain/.venv'#
+    let virtual_env = r#'/Users/sam/Desktop/Titlechain/.venv'#
     let bin = r#'bin'#
 
     let is_windows = ($nu.os-info.family) == 'windows'
