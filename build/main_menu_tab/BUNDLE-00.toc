@@ -1,0 +1,3 @@
+([('main_menu_tab',
+   '/Users/sam/Desktop/Titlechain/dist/main_menu_tab',
+   'EXECUTABLE')],)

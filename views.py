@@ -6,22 +6,43 @@ class PropertyView(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        columns = [
+        self.columns = [
             "Property Address", "Buyer", "Seller", "Purchase Price", "Policy Types",
             "Loan Amount", "Lien Holder", "Lien Amount", "Tax Year", "Due Date",
             "Easement Type", "Zoning Code"
         ]
 
+        self.data = []  # Store the properties data locally for filtering
+
         # Configure the grid to make widgets expand
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        # Search frame
+        search_frame = ttk.Frame(self)
+        search_frame.grid(row=0, column=0, sticky='ew', pady=5)
+        search_frame.grid_columnconfigure(1, weight=1)
+
+        # Search label and entry
+        ttk.Label(search_frame, text="Search:").grid(row=0, column=0, padx=5)
+        self.search_var = tk.StringVar()
+        search_entry = ttk.Entry(search_frame, textvariable=self.search_var)
+        search_entry.grid(row=0, column=1, sticky='ew', padx=5)
+
+        # Search button
+        search_btn = ttk.Button(search_frame, text="Search", command=self.search_properties)
+        search_btn.grid(row=0, column=2, padx=5)
+
+        # Reset button
+        reset_btn = ttk.Button(search_frame, text="Reset", command=self.refresh_view)
+        reset_btn.grid(row=0, column=3, padx=5)
 
         # Create a frame for the Treeview and scrollbars
         tree_frame = ttk.Frame(self)
-        tree_frame.grid(row=0, column=0, sticky='nsew')
+        tree_frame.grid(row=1, column=0, sticky='nsew')
 
         # Create the Treeview
-        self.tree = ttk.Treeview(tree_frame, columns=columns, show='headings')
+        self.tree = ttk.Treeview(tree_frame, columns=self.columns, show='headings')
 
         # Add scrollbars
         vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
@@ -38,7 +59,7 @@ class PropertyView(ttk.Frame):
         tree_frame.grid_columnconfigure(0, weight=1)
 
         # Define columns with appropriate settings
-        for col in columns:
+        for col in self.columns:
             self.tree.heading(col, text=col)
             self.tree.column(col, width=120, anchor='center')
 
@@ -47,7 +68,7 @@ class PropertyView(ttk.Frame):
 
         # Refresh button
         refresh_btn = ttk.Button(self, text="Refresh", command=self.refresh_view)
-        refresh_btn.grid(row=1, column=0, pady=10)
+        refresh_btn.grid(row=2, column=0, pady=10)
 
     def display_no_data_message(self):
         # Clear existing data
@@ -62,13 +83,13 @@ class PropertyView(ttk.Frame):
             self.tree.delete(row)
 
         # Fetch properties from the blockchain (when ready)
-        properties = fetch_properties()
+        self.data = fetch_properties()
 
-        if not properties:
+        if not self.data:
             self.display_no_data_message()
             return
 
-        for prop in properties:
+        for prop in self.data:
             self.tree.insert("", tk.END, values=(
                 prop.get("Property Address", ""),
                 prop.get("Buyer", ""),
@@ -83,6 +104,42 @@ class PropertyView(ttk.Frame):
                 prop.get("Easement Type", ""),
                 prop.get("Zoning Code", ""),
             ))
+
+    def search_properties(self):
+        # Get search query
+        query = self.search_var.get().lower()
+
+        # Filter properties based on the query
+        filtered_data = [
+            prop for prop in self.data
+            if any(query in str(value).lower() for value in prop.values())
+        ]
+
+        # Clear existing data
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+        if not filtered_data:
+            self.display_no_data_message()
+            return
+
+        # Insert filtered data
+        for prop in filtered_data:
+            self.tree.insert("", tk.END, values=(
+                prop.get("Property Address", ""),
+                prop.get("Buyer", ""),
+                prop.get("Seller", ""),
+                prop.get("Purchase Price", ""),
+                prop.get("Policy Types", ""),
+                prop.get("Loan Amount", ""),
+                prop.get("Lien Holder", ""),
+                prop.get("Lien Amount", ""),
+                prop.get("Tax Year", ""),
+                prop.get("Due Date", ""),
+                prop.get("Easement Type", ""),
+                prop.get("Zoning Code", ""),
+            ))
+
 
 # For testing purposes (optional)
 if __name__ == "__main__":
