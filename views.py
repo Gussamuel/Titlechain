@@ -7,9 +7,9 @@ class PropertyView(ttk.Frame):
         super().__init__(parent)
 
         self.columns = [
-            "Property Address", "Buyer", "Seller", "Purchase Price", "Policy Types",
-            "Loan Amount", "Lien Holder", "Lien Amount", "Tax Year", "Due Date",
-            "Easement Type", "Zoning Code"
+            "Property Address", "Policy Date", "Vested Parties",
+            "Standard Policy Exceptions", "Property Specific Exceptions",
+            "Legal Description/Derivation Clause"
         ]
 
         self.data = []  # Store the properties data locally for filtering
@@ -145,7 +145,7 @@ class PropertyView(ttk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Property View")
-    root.geometry("800x850")
+    root.geometry("1200x1000")
 
     # Configure root window grid
     root.grid_rowconfigure(0, weight=1)

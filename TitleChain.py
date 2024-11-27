@@ -2,13 +2,14 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from blockchain_tab import BlockchainTab  # Import the BlockchainTab class
+from title_search import TitleTab  # Import the TitleTab class
 
 class TitleChainApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
         self.title("TitleChain")
-        self.geometry("1200x850")
+        self.geometry("1200x1000")
 
         # Configure the grid layout for the main window
         self.grid_rowconfigure(0, weight=1)  # Notebook row
@@ -27,6 +28,10 @@ class TitleChainApp(tk.Tk):
         # Blockchain tab (contains transaction form and property view)
         self.blockchain_tab = BlockchainTab(self.notebook)
         self.notebook.add(self.blockchain_tab, text="Blockchain")
+        
+        # Title Search tab
+        self.title_search_tab = TitleTab(self.notebook)
+        self.notebook.add(self.title_search_tab, text="Title Search")
 
         # Quit button at the bottom
         self.button_frame = ttk.Frame(self)
@@ -90,6 +95,15 @@ class TitleChainApp(tk.Tk):
         )
         view_btn.pack(pady=10)
 
+        # Title Search button
+        search_btn = ttk.Button(
+            button_frame,
+            text="Title Search",
+            command=self.go_to_title_search,  # Ensure this method exists
+            width=25
+        )
+        search_btn.pack(pady=10)
+
         # Additional navigation buttons can be added here
         # Example:
         # settings_btn = ttk.Button(
@@ -109,6 +123,10 @@ class TitleChainApp(tk.Tk):
         # Switch to the Blockchain tab and select the "View Properties" sub-tab
         self.notebook.select(self.blockchain_tab)
         self.blockchain_tab.inner_notebook.select(self.blockchain_tab.property_view)
+        
+    def go_to_title_search(self):
+        # Switch to the Title Search tab
+        self.notebook.select(self.title_search_tab)
 
     def quit_app(self):
         response = messagebox.askyesno("Exit", "Are you sure you want to quit?")

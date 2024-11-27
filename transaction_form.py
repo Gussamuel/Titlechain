@@ -1,165 +1,177 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-from utils import submit_transaction
+from tkinter import ttk, messagebox
+from datetime import datetime, timedelta
 
 class TransactionForm(ttk.Frame):
     def __init__(self, parent, add_transaction_callback=None):
         super().__init__(parent)
         self.add_transaction_callback = add_transaction_callback
 
-        # Define categories and fields
-        self.categories = {
-            "Property Details": [
-                "Property Address", "City", "State", "Zip Code", "County"
-            ],
-            "Participants": [
-                "Buyer", "Seller", "Listing Agent", "Selling Agent", "Lender", 
-                "Title Company 1", "Title Company 2"
-            ],
-            "Financial Details": [
-                "Purchase Price", "Loan Amount", "Policy Types", "Policy Premiums", 
-                "Lien Holder", "Lien Amount"
-            ],
-            "Important Dates": [
-                "Lien Date", "Expiration Date", "Due Date", "Permit Issue Date", 
-                "Survey Date", "Litigation Filing Date"
-            ],
-            "Additional Information": [
-                "Tax Year", "Amount Due", "Amount Paid", "Easement Type", 
-                "Easement Granted To", "Easement Description", "Zoning Code", 
-                "Zoning Description", "Inspection Status", "Surveyor Name", 
-                "Boundary Description", "Litigation Type", "Plaintiff", "Defendant", 
-                "Case Status"
-            ]
-        }
+        # Define pages for the form
+        self.pages = [
+            "Property Address",
+            "Policy Date",
+            "Vested Parties",
+            "Standard Policy Exceptions",
+            "Property Specific Exceptions",
+            "Legal Description/Derivation Clause",
+        ]
 
-        self.entries = {}
-        self.current_category_index = 0
-        self.category_keys = list(self.categories.keys())
+        # Data to store entered values
+        self.transaction_data = {}
+        self.current_page_index = 0
 
-        # Configure the grid to expand
+        # Configure the grid to allow dynamic resizing
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
         self.grid_columnconfigure(0, weight=1)
 
-        # Create the category frame (content area)
-        self.category_frame = ttk.Frame(self)
-        self.category_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
-
-        # Create the navigation button frame
-        self.button_frame = ttk.Frame(self)
-        self.button_frame.grid(row=1, column=0, pady=10)
-
-        # Setup the initial category frame
-        self.setup_category_frame()
+        # Setup the layout
+        self.setup_page_area()
         self.setup_navigation_buttons()
 
-    def setup_category_frame(self):
-        # Clear all widgets in the category frame
-        for widget in self.category_frame.winfo_children():
-            widget.destroy()
+        # Render the first page
+        self.render_page()
 
-        # Configure grid in category_frame
-        self.category_frame.grid_columnconfigure(0, weight=0)  # Labels
-        self.category_frame.grid_columnconfigure(1, weight=1)  # Entries
-
-        # Display the category title
-        category = self.category_keys[self.current_category_index]
-        title_label = ttk.Label(self.category_frame, text=category, font=("Helvetica", 16, "bold"))
-        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20), sticky='w')
-
-        fields = self.categories[category]
-
-        for idx, field in enumerate(fields):
-            label = ttk.Label(self.category_frame, text=field + ":")
-            label.grid(row=idx + 1, column=0, padx=10, pady=5, sticky='w')
-
-            entry = ttk.Entry(self.category_frame, width=60)
-            entry.grid(row=idx + 1, column=1, padx=10, pady=5, sticky='w')
-            self.entries[field] = entry
+    def setup_page_area(self):
+        """Set up the area where the form fields will appear."""
+        self.page_area = ttk.Frame(self)
+        self.page_area.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        self.page_area.grid_rowconfigure(0, weight=1)
+        self.page_area.grid_columnconfigure(0, weight=1)
 
     def setup_navigation_buttons(self):
-        # Clear all widgets in the button frame
-        for widget in self.button_frame.winfo_children():
+        """Set up the navigation buttons (Next, Previous, Submit)."""
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.grid(row=1, column=0, pady=10, sticky="ew")
+        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.button_frame.grid_columnconfigure(1, weight=1)
+
+        # Previous button
+        self.prev_button = ttk.Button(self.button_frame, text="Previous", command=self.previous_page)
+        self.prev_button.grid(row=0, column=0, padx=5, sticky="e")
+
+        # Next button
+        self.next_button = ttk.Button(self.button_frame, text="Next", command=self.next_page)
+        self.next_button.grid(row=0, column=1, padx=5, sticky="w")
+
+    def render_page(self):
+        """Render the current page based on the page index."""
+        for widget in self.page_area.winfo_children():
             widget.destroy()
 
-        # Create Previous button
-        if self.current_category_index > 0:
-            prev_button = ttk.Button(self.button_frame, text="Previous", command=self.prev_category)
-            prev_button.grid(row=0, column=0, padx=5, sticky='e')
+        page_title = self.pages[self.current_page_index]
+        ttk.Label(self.page_area, text=page_title, font=("Helvetica", 16, "bold")).grid(row=0, column=0, columnspan=2, pady=10)
+
+        # Render fields for the current page
+        if page_title == "Property Address":
+            self.render_property_address_fields()
+        elif page_title == "Policy Date":
+            self.render_policy_date_fields()
+        elif page_title == "Vested Parties":
+            self.render_vested_parties_fields()
+        elif page_title == "Standard Policy Exceptions":
+            self.render_text_area_field("Standard Policy Exceptions")
+        elif page_title == "Property Specific Exceptions":
+            self.render_text_area_field("Property Specific Exceptions")
+        elif page_title == "Legal Description/Derivation Clause":
+            self.render_text_area_field("Legal Description/Derivation Clause")
+
+        # Update button visibility
+        self.prev_button["state"] = tk.NORMAL if self.current_page_index > 0 else tk.DISABLED
+        self.next_button["text"] = "Submit" if self.current_page_index == len(self.pages) - 1 else "Next"
+
+    def render_property_address_fields(self):
+        """Render fields for the Property Address page."""
+        fields = ["Street", "Apt/Building (if applicable)", "City", "State", "Zip"]
+        for idx, field in enumerate(fields):
+            ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
+            entry = ttk.Entry(self.page_area)
+            entry.grid(row=idx + 1, column=1, sticky="ew", padx=10, pady=5)
+            self.transaction_data[field] = entry
+
+    def render_policy_date_fields(self):
+        """Render fields for the Policy Date page."""
+        ttk.Label(self.page_area, text="Policy Date (MM/DD/YYYY):").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        entry = ttk.Entry(self.page_area)
+        entry.grid(row=1, column=1, sticky="ew", padx=10, pady=5)
+        self.transaction_data["Policy Date"] = entry
+
+    def render_vested_parties_fields(self):
+        """Render fields for the Vested Parties page."""
+        ttk.Label(self.page_area, text="Vested Parties (one per line):").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        text_area = tk.Text(self.page_area, height=8, width=40)
+        text_area.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
+        self.transaction_data["Vested Parties"] = text_area
+
+    def render_text_area_field(self, field_name):
+        """Render a text area for fields that require detailed input."""
+        ttk.Label(self.page_area, text=f"{field_name}:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+        text_area = tk.Text(self.page_area, height=10, width=50)
+        text_area.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
+        self.transaction_data[field_name] = text_area
+
+    def next_page(self):
+        """Navigate to the next page or submit the form."""
+        if self.current_page_index == len(self.pages) - 1:
+            self.confirm_submission()
         else:
-            # Add a placeholder to maintain button alignment
-            ttk.Label(self.button_frame).grid(row=0, column=0)
+            self.current_page_index += 1
+            self.render_page()
 
-        # Create Next or Submit button
-        if self.current_category_index < len(self.categories) - 1:
-            next_button = ttk.Button(self.button_frame, text="Next", command=self.next_category)
-            next_button.grid(row=0, column=1, padx=5, sticky='w')
-        else:
-            submit_button = ttk.Button(self.button_frame, text="Submit Transaction", command=self.confirm_submission)
-            submit_button.grid(row=0, column=1, padx=5, sticky='w')
-
-    def next_category(self):
-        self.current_category_index += 1
-        self.setup_category_frame()
-        self.setup_navigation_buttons()
-
-    def prev_category(self):
-        self.current_category_index -= 1
-        self.setup_category_frame()
-        self.setup_navigation_buttons()
+    def previous_page(self):
+        """Navigate to the previous page."""
+        if self.current_page_index > 0:
+            self.current_page_index -= 1
+            self.render_page()
 
     def confirm_submission(self):
-        """
-        Show a confirmation dialog before submitting the transaction.
-        """
+        """Confirm before submitting the transaction."""
         confirm = messagebox.askyesno(
             "Confirm Submission",
-            "Are you sure you want to submit this transaction? "
-            "You will have 15 minutes to un-submit it if you made a mistake."
+            "Are you sure you want to submit this transaction? You will have 15 minutes to un-submit if needed."
         )
-
         if confirm:
             self.submit_form()
 
     def submit_form(self):
-        transaction_data = {field: entry.get() for field, entry in self.entries.items()}
+        """Submit the form and clear the data."""
+        transaction_data = {}
+        for key, widget in self.transaction_data.items():
+            if isinstance(widget, tk.Text):
+                transaction_data[key] = widget.get("1.0", tk.END).strip()
+            else:
+                transaction_data[key] = widget.get().strip()
 
         if not all(transaction_data.values()):
             messagebox.showerror("Error", "All fields must be filled out.")
             return
 
-        # Use the callback if provided
         if self.add_transaction_callback:
             self.add_transaction_callback(transaction_data)
-            messagebox.showinfo("Success", "Transaction added to pending list.")
         else:
-            success = submit_transaction(transaction_data)
-            if success:
-                messagebox.showinfo("Success", "Transaction added to the blockchain successfully.")
-            else:
-                messagebox.showerror("Error", "Failed to add transaction to the blockchain.")
+            print("Transaction Submitted:", transaction_data)
 
-        self.clear_form()
-        self.current_category_index = 0
-        self.setup_category_frame()
-        self.setup_navigation_buttons()
+        messagebox.showinfo("Success", "Transaction submitted! It will be added to pending transactions.")
+        self.reset_form()
 
-    def clear_form(self):
-        for entry in self.entries.values():
-            entry.delete(0, tk.END)
+    def reset_form(self):
+        """Reset the form for a new transaction."""
+        self.transaction_data.clear()
+        self.current_page_index = 0
+        self.render_page()
+
 
 # Main application setup
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Transaction Form")
-    root.geometry("800x850")
+    root.geometry("800x600")
 
-    # Configure root grid
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
 
     transaction_form = TransactionForm(root)
-    transaction_form.grid(row=0, column=0, sticky='nsew')
+    transaction_form.grid(row=0, column=0, sticky="nsew")
 
     root.mainloop()
