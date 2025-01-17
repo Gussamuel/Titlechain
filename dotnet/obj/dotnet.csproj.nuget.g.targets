@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)softpro.select.server.sdk\4.6.8\build\SoftPro.Select.Server.Sdk.targets" Condition="Exists('$(NuGetPackageRoot)softpro.select.server.sdk\4.6.8\build\SoftPro.Select.Server.Sdk.targets')" />
+  </ImportGroup>
+</Project>

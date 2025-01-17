@@ -1,1 +1,0 @@
-([('main', '/Users/sam/Desktop/Titlechain/dist/main', 'EXECUTABLE')],)

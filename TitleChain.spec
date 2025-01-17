@@ -5,7 +5,7 @@ a = Analysis(
     ['TitleChain.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('data/stateTitle.json', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,10 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-)
-app = BUNDLE(
-    exe,
-    name='TitleChain.app',
-    icon=None,
-    bundle_identifier=None,
 )

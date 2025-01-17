@@ -1,0 +1,300 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "SoftPro.Select.Core/4.6.0": {
+        "type": "package",
+        "compile": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        },
+        "runtime": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        }
+      },
+      "SoftPro.Select.Core.Sdk/4.5.5": {
+        "type": "package",
+        "compile": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        },
+        "runtime": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        }
+      },
+      "SoftPro.Select.Server.Core/4.6.0": {
+        "type": "package",
+        "compile": {
+          "lib/net46/SoftPro.PersistenceModel.dll": {},
+          "lib/net46/SoftPro.Select.Service.dll": {},
+          "lib/net46/SoftPro.ServerModel.dll": {}
+        },
+        "runtime": {
+          "lib/net46/SoftPro.PersistenceModel.dll": {},
+          "lib/net46/SoftPro.Select.Service.dll": {},
+          "lib/net46/SoftPro.ServerModel.dll": {}
+        }
+      },
+      "SoftPro.Select.Server.Sdk/4.6.8": {
+        "type": "package",
+        "dependencies": {
+          "SoftPro.Select.Core": "4.5.4",
+          "SoftPro.Select.Server.Core": "4.5.4"
+        },
+        "build": {
+          "build/SoftPro.Select.Server.Sdk.props": {},
+          "build/SoftPro.Select.Server.Sdk.targets": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SoftPro.Select.Core/4.6.0": {
+      "sha512": "mX3LMCNhyjPp08AILQ7asS4VouRb+8C0O+F/PUWWCy039bpcQHN3uabhRg4GMMuzZwdbELKcbQmuWGyxMOCaEg==",
+      "type": "package",
+      "path": "softpro.select.core/4.6.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net46/SoftPro.Accounting.Client.dll",
+        "lib/net46/SoftPro.ClientModel.dll",
+        "lib/net46/SoftPro.Documents.Client.dll",
+        "lib/net46/SoftPro.EntityModel.dll",
+        "lib/net46/SoftPro.Imaging.Client.dll",
+        "lib/net46/SoftPro.OrderTracking.Client.dll",
+        "lib/net46/SoftPro.ProceedsTracking.Client.dll",
+        "lib/net46/SoftPro.Register.Client.dll",
+        "lib/net46/SoftPro.Reporting.Client.dll",
+        "lib/net46/SoftPro.Select.Client.dll",
+        "softpro.select.core.4.6.0.nupkg.sha512",
+        "softpro.select.core.nuspec"
+      ]
+    },
+    "SoftPro.Select.Core.Sdk/4.5.5": {
+      "sha512": "Kv+rzx9u0sl/2ki/3ROPl0soqvdH9sd32dJ/9fmjHqdKOarkACmJIrVhOboBdT6aGvrSm343vswefuIbDj3mBQ==",
+      "type": "package",
+      "path": "softpro.select.core.sdk/4.5.5",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net46/SoftPro.Accounting.Client.dll",
+        "lib/net46/SoftPro.ClientModel.dll",
+        "lib/net46/SoftPro.Documents.Client.dll",
+        "lib/net46/SoftPro.EntityModel.dll",
+        "lib/net46/SoftPro.Imaging.Client.dll",
+        "lib/net46/SoftPro.OrderTracking.Client.dll",
+        "lib/net46/SoftPro.ProceedsTracking.Client.dll",
+        "lib/net46/SoftPro.Register.Client.dll",
+        "lib/net46/SoftPro.Reporting.Client.dll",
+        "lib/net46/SoftPro.Select.Client.dll",
+        "softpro.select.core.sdk.4.5.5.nupkg.sha512",
+        "softpro.select.core.sdk.nuspec"
+      ]
+    },
+    "SoftPro.Select.Server.Core/4.6.0": {
+      "sha512": "OVjUDOijxC8lVv0MHQkLmQFDcuZn6XUATdlao5gFTB2C+rYlTO8q3VwiL328qNWOX5vVEti9/VUl6MPaK4PerA==",
+      "type": "package",
+      "path": "softpro.select.server.core/4.6.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net46/SoftPro.PersistenceModel.dll",
+        "lib/net46/SoftPro.Select.Service.dll",
+        "lib/net46/SoftPro.ServerModel.dll",
+        "softpro.select.server.core.4.6.0.nupkg.sha512",
+        "softpro.select.server.core.nuspec"
+      ]
+    },
+    "SoftPro.Select.Server.Sdk/4.6.8": {
+      "sha512": "HKiil/RMSm+a17Z9xLSiHqWGpSZERff1EJp1+Rf8f2emaHWChAXYr3W+qDhtm8rfkPSDjkCpuvp3naxyBGNiqA==",
+      "type": "package",
+      "path": "softpro.select.server.sdk/4.6.8",
+      "hasTools": true,
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/Mono.Cecil.Mdb.dll",
+        "build/Mono.Cecil.Pdb.dll",
+        "build/Mono.Cecil.Rocks.dll",
+        "build/Mono.Cecil.dll",
+        "build/Newtonsoft.Json.dll",
+        "build/NuGet.Common.dll",
+        "build/NuGet.Configuration.dll",
+        "build/NuGet.Frameworks.dll",
+        "build/NuGet.Packaging.Core.dll",
+        "build/NuGet.Packaging.dll",
+        "build/NuGet.Versioning.dll",
+        "build/SoftPro.Select.Sdk.Tasks.dll",
+        "build/SoftPro.Select.Sdk.Tasks.pdb",
+        "build/SoftPro.Select.Server.Sdk.props",
+        "build/SoftPro.Select.Server.Sdk.targets",
+        "softpro.select.server.sdk.4.6.8.nupkg.sha512",
+        "softpro.select.server.sdk.nuspec",
+        "tools/install.ps1"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "SoftPro.Select.Core.Sdk >= 4.5.5",
+      "SoftPro.Select.Server.Sdk >= 4.6.8"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\samhs\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\samhs\\Desktop\\Titlechain\\dotnet\\dotnet.csproj",
+      "projectName": "dotnet",
+      "projectPath": "C:\\Users\\samhs\\Desktop\\Titlechain\\dotnet\\dotnet.csproj",
+      "packagesPath": "C:\\Users\\samhs\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\samhs\\Desktop\\Titlechain\\dotnet\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\samhs\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "SoftPro.Select.Core.Sdk": {
+            "target": "Package",
+            "version": "[4.5.5, )"
+          },
+          "SoftPro.Select.Server.Sdk": {
+            "target": "Package",
+            "version": "[4.6.8, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.405/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "SoftPro.Select.Server.Sdk 4.6.8 depends on SoftPro.Select.Core (>= 4.5.4) but SoftPro.Select.Core 4.5.4 was not found. An approximate best match of SoftPro.Select.Core 4.6.0 was resolved.",
+      "libraryId": "SoftPro.Select.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "SoftPro.Select.Server.Sdk 4.6.8 depends on SoftPro.Select.Server.Core (>= 4.5.4) but SoftPro.Select.Server.Core 4.5.4 was not found. An approximate best match of SoftPro.Select.Server.Core 4.6.0 was resolved.",
+      "libraryId": "SoftPro.Select.Server.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core 4.6.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core.Sdk 4.5.5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core.Sdk",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Server.Core 4.6.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Server.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,15 @@
+import sys
+import os
+
+# Add the 'src' folder to the system path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-from blockchain_tab import BlockchainTab  # Import the BlockchainTab class
-from title_search import TitleTab  # Import the TitleTab class
+from src.blockchain_tab import BlockchainTab  # Import the BlockchainTab class
+from src.title_search import TitleTab  # Import the TitleTab class
+from src.blockchain_tab import BlockchainTab
 
 class TitleChainApp(tk.Tk):
     def __init__(self):

@@ -1,0 +1,64 @@
+{
+  "version": 2,
+  "dgSpecHash": "FLfd9/hFhTA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\samhs\\Desktop\\Titlechain\\dotnet\\dotnet.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\samhs\\.nuget\\packages\\softpro.select.core\\4.6.0\\softpro.select.core.4.6.0.nupkg.sha512",
+    "C:\\Users\\samhs\\.nuget\\packages\\softpro.select.core.sdk\\4.5.5\\softpro.select.core.sdk.4.5.5.nupkg.sha512",
+    "C:\\Users\\samhs\\.nuget\\packages\\softpro.select.server.core\\4.6.0\\softpro.select.server.core.4.6.0.nupkg.sha512",
+    "C:\\Users\\samhs\\.nuget\\packages\\softpro.select.server.sdk\\4.6.8\\softpro.select.server.sdk.4.6.8.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "SoftPro.Select.Server.Sdk 4.6.8 depends on SoftPro.Select.Core (>= 4.5.4) but SoftPro.Select.Core 4.5.4 was not found. An approximate best match of SoftPro.Select.Core 4.6.0 was resolved.",
+      "libraryId": "SoftPro.Select.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "SoftPro.Select.Server.Sdk 4.6.8 depends on SoftPro.Select.Server.Core (>= 4.5.4) but SoftPro.Select.Server.Core 4.5.4 was not found. An approximate best match of SoftPro.Select.Server.Core 4.6.0 was resolved.",
+      "libraryId": "SoftPro.Select.Server.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core 4.6.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core.Sdk 4.5.5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core.Sdk",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Server.Core 4.6.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Server.Core",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}
