@@ -7,9 +7,18 @@ class PropertyView(ttk.Frame):
         super().__init__(parent)
 
         self.columns = [
-            "Property Address", "Policy Date", "Vested Parties",
-            "Standard Policy Exceptions", "Property Specific Exceptions",
-            "Legal Description/Derivation Clause"
+            "Property Address", 
+            "Policy Date",
+            "Vested Parties",
+            "Underwriters", 
+            "Coverage Amount", 
+            "Owner's Policy",
+            "Lender's Policy",
+            "Standard Policy Exceptions", 
+            "Property Specific Exceptions",
+            "Legal Description/Derivation Clause",
+            "Revised",
+            "Revision"
         ]
 
         self.data = []  # Store the properties data locally for filtering

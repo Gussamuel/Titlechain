@@ -12,9 +12,15 @@ class TransactionForm(ttk.Frame):
             "Property Address",
             "Policy Date",
             "Vested Parties",
+            "Underwriters",
+            "Coverage Amount",
+            "Owner's Policy",
+            "Lender's Policy",
             "Standard Policy Exceptions",
             "Property Specific Exceptions",
             "Legal Description/Derivation Clause",
+            "Revised",
+            "Revision"
         ]
 
         # Data to store entered values

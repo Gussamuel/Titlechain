@@ -38,11 +38,17 @@ class TransactionManager(ttk.Frame):
             tree_frame,
             columns=(
                 "Property Address", 
-                "Policy Date", 
-                "Vested Parties", 
+                "Policy Date",
+                "Vested Parties",
+                "Underwriters", 
+                "Coverage Amount",
+                "Owner's Policy",
+                "Lender's Policy",
                 "Standard Policy Exceptions", 
                 "Property Specific Exceptions", 
-                "Legal Description/Derivation Clause", 
+                "Legal Description/Derivation Clause",
+                "Revised",
+                "Revision",
                 "Remaining Time"
             ),
             show="headings"
