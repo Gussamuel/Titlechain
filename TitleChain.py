@@ -8,38 +8,43 @@ import pythonnet
 import sys
 import clr
 
-# ✅ FIXED: Use raw string (r"") or double backslashes
-sdk_path = r"C:\Program Files (x86)\SoftPro\SelectSDK\lib\net46"
-
-# ✅ Ensure path exists before proceeding
-if not os.path.exists(sdk_path):
-    raise FileNotFoundError(f"SDK path does not exist: {sdk_path}")
-
-# ✅ Add SDK path to sys.path
+# ✅ Load SoftPro assemblies (ensure correct path)
+sdk_path = os.path.abspath(os.path.dirname(__file__))  # TitleChain root folder
 if sdk_path not in sys.path:
     sys.path.append(sdk_path)
 
-# ✅ Initialize pythonnet (important!)
+required_dlls = [
+    "SoftPro.Select.Client.dll",
+    "SoftPro.Documents.Client.dll",
+    "SoftPro.Accounting.Client.dll"
+]
+
+missing_dlls = [dll for dll in required_dlls if not os.path.exists(os.path.join(sdk_path, dll))]
+if missing_dlls:
+    raise FileNotFoundError(f"❌ Missing DLLs in {sdk_path}: {missing_dlls}")
+
+print("✅ All required DLLs are present in the TitleChain root folder!")
+
+# ✅ Initialize pythonnet
 pythonnet.load("coreclr")
 
-# ✅ Load SoftPro assemblies safely
+# ✅ Load SoftPro assemblies
 try:
-    clr.AddReference("SoftPro.Select.Client")
-    clr.AddReference("SoftPro.Documents.Client")
-    clr.AddReference("SoftPro.Accounting.Client")
-    print("SoftPro DLLs loaded successfully!")
+    clr.AddReference(os.path.join(sdk_path, "SoftPro.Select.Client.dll"))
+    clr.AddReference(os.path.join(sdk_path, "SoftPro.Documents.Client.dll"))
+    clr.AddReference(os.path.join(sdk_path, "SoftPro.Accounting.Client.dll"))
+    print("✅ SoftPro DLLs loaded successfully!")
 except Exception as e:
-    print(f"Error loading SoftPro DLLs: {e}")
+    print(f"❌ Error loading SoftPro DLLs: {e}")
 
-# ✅ Now import SoftPro components
+# ✅ Import SoftPro components
 try:
     from SoftPro.Select.Client import SelectClient
     from SoftPro.Documents.Client import DocumentManager
     from SoftPro.Accounting.Client import AccountingManager
-    print("SoftPro modules imported successfully!")
+    print("✅ SoftPro modules imported successfully!")
 except ImportError as e:
-    print(f"Import Error: {e}")
-
+    print(f"❌ Import Error: {e}")
 class TitleChainApp(tk.Tk):
     def __init__(self):
         super().__init__()
