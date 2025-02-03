@@ -154,7 +154,7 @@ class PropertyView(ttk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Property View")
-    root.geometry("1200x1000")
+    root.geometry("1000x750")
 
     # Configure root window grid
     root.grid_rowconfigure(0, weight=1)

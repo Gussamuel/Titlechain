@@ -1,26 +1,16 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from datetime import datetime, timedelta
 
 class TransactionForm(ttk.Frame):
     def __init__(self, parent, add_transaction_callback=None):
         super().__init__(parent)
         self.add_transaction_callback = add_transaction_callback
 
-        # Define pages for the form
+        # Define consolidated pages
         self.pages = [
-            "Property Address",
-            "Policy Date",
-            "Vested Parties",
-            "Underwriters",
-            "Coverage Amount",
-            "Owner's Policy",
-            "Lender's Policy",
-            "Standard Policy Exceptions",
-            "Property Specific Exceptions",
-            "Legal Description/Derivation Clause",
-            "Revised",
-            "Revision"
+            "Property Details/Policy Date",
+            "Transaction Details",
+            "Policy Exceptions and Revisions"
         ]
 
         # Data to store entered values
@@ -70,52 +60,131 @@ class TransactionForm(ttk.Frame):
         ttk.Label(self.page_area, text=page_title, font=("Helvetica", 16, "bold")).grid(row=0, column=0, columnspan=2, pady=10)
 
         # Render fields for the current page
-        if page_title == "Property Address":
-            self.render_property_address_fields()
-        elif page_title == "Policy Date":
-            self.render_policy_date_fields()
-        elif page_title == "Vested Parties":
-            self.render_vested_parties_fields()
-        elif page_title == "Standard Policy Exceptions":
-            self.render_text_area_field("Standard Policy Exceptions")
-        elif page_title == "Property Specific Exceptions":
-            self.render_text_area_field("Property Specific Exceptions")
-        elif page_title == "Legal Description/Derivation Clause":
-            self.render_text_area_field("Legal Description/Derivation Clause")
+        if page_title == "Property Details/Policy Date":
+            self.render_property_details()
+        elif page_title == "Transaction Details":
+            self.render_transaction_details()
+        elif page_title == "Policy Exceptions and Revisions":
+            self.render_policy_exceptions_and_revisions()
 
         # Update button visibility
         self.prev_button["state"] = tk.NORMAL if self.current_page_index > 0 else tk.DISABLED
         self.next_button["text"] = "Submit" if self.current_page_index == len(self.pages) - 1 else "Next"
 
-    def render_property_address_fields(self):
-        """Render fields for the Property Address page."""
-        fields = ["Street", "Apt/Building (if applicable)", "City", "State", "Zip"]
+    def render_property_details(self):
+        """Render fields for Property Address and Policy Date."""
+        fields = ["Street", "Apt/Building (if applicable)", "City", "State", "Zip", "Policy Date (MM/DD/YYYY)"]
         for idx, field in enumerate(fields):
             ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
-            entry = ttk.Entry(self.page_area)
+            entry = ttk.Entry(self.page_area, width=40)
             entry.grid(row=idx + 1, column=1, sticky="ew", padx=10, pady=5)
             self.transaction_data[field] = entry
 
-    def render_policy_date_fields(self):
-        """Render fields for the Policy Date page."""
-        ttk.Label(self.page_area, text="Policy Date (MM/DD/YYYY):").grid(row=1, column=0, sticky="w", padx=10, pady=5)
-        entry = ttk.Entry(self.page_area)
-        entry.grid(row=1, column=1, sticky="ew", padx=10, pady=5)
-        self.transaction_data["Policy Date"] = entry
+    def render_transaction_details(self):
+        """Render fields for Vested Parties, Underwriters, Coverage Amount, Owner's Policy, and Lender's Policy."""
 
-    def render_vested_parties_fields(self):
-        """Render fields for the Vested Parties page."""
-        ttk.Label(self.page_area, text="Vested Parties (one per line):").grid(row=1, column=0, sticky="w", padx=10, pady=5)
-        text_area = tk.Text(self.page_area, height=8, width=40)
-        text_area.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
-        self.transaction_data["Vested Parties"] = text_area
+        # Adjust input box sizes for "Vested Parties" and "Underwriters"
+        large_fields = ["Vested Parties", "Underwriters"]
+        for idx, field in enumerate(large_fields):
+            ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
+            text_area = tk.Text(self.page_area, height=6, width=50)  # Increased size
+            text_area.grid(row=idx + 1, column=1, columnspan=2, sticky="nsew", padx=10, pady=5)  # Span 2 columns
+            self.transaction_data[field] = text_area
 
-    def render_text_area_field(self, field_name):
-        """Render a text area for fields that require detailed input."""
-        ttk.Label(self.page_area, text=f"{field_name}:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
-        text_area = tk.Text(self.page_area, height=10, width=50)
-        text_area.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
-        self.transaction_data[field_name] = text_area
+        # Coverage Amount with a standard input box
+        ttk.Label(self.page_area, text="Coverage Amount:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        entry = ttk.Entry(self.page_area, width=30)  # Increased width
+        entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=10, pady=5)
+        self.transaction_data["Coverage Amount"] = entry
+
+        # Policy Type Section
+        ttk.Label(self.page_area, text="Policy Type:").grid(row=4, column=0, sticky="w", padx=10, pady=5)
+
+        # Frame to group checkboxes together
+        policy_frame = ttk.Frame(self.page_area)
+        policy_frame.grid(row=4, column=1, columnspan=2, sticky="w", padx=10, pady=5)
+
+        self.owners_policy_var = tk.BooleanVar()
+        owners_checkbox = ttk.Checkbutton(
+            policy_frame, text="Owner's Policy", variable=self.owners_policy_var, command=self.sync_policy_checkboxes
+        )
+        owners_checkbox.pack(side="left", padx=5)  # Pack instead of grid for better alignment
+
+        self.lenders_policy_var = tk.BooleanVar()
+        lenders_checkbox = ttk.Checkbutton(
+            policy_frame, text="Lender's Policy", variable=self.lenders_policy_var, command=self.sync_policy_checkboxes
+        )
+        lenders_checkbox.pack(side="left", padx=5)
+
+        self.transaction_data["Owner's Policy"] = self.owners_policy_var
+        self.transaction_data["Lender's Policy"] = self.lenders_policy_var
+
+    def sync_policy_checkboxes(self):
+        """Ensure only one policy can be selected at a time."""
+        if self.owners_policy_var.get():
+            self.lenders_policy_var.set(False)
+        elif self.lenders_policy_var.get():
+            self.owners_policy_var.set(False)
+
+    def render_policy_exceptions_and_revisions(self):
+        """Render fields for Standard Policy Exceptions, Property Specific Exceptions, Legal Description, Revised, and Revision."""
+        
+        ttk.Label(self.page_area, text="Standard Policy Exceptions:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
+
+        # Frame for checkboxes
+        self.exceptions_frame = ttk.Frame(self.page_area)
+        self.exceptions_frame.grid(row=2, column=0, columnspan=2, sticky="w", padx=10, pady=5)
+
+        # List of Standard Policy Exceptions
+        standard_exceptions = [
+            "1. Rights or claims of parties in possession not shown by the public records.",
+            "2. Easements or claims of easements not shown by the public records.",
+            "3. Encroachments, overlaps, boundary line disputes, or other matters that would be disclosed by an accurate survey.",
+            "4. Any lien, or right to a lien, for services, labor or material not shown by the public records.",
+            "5. Taxes or special assessments not yet due or payable."
+        ]
+
+        self.exceptions_vars = {}
+
+        # "Select All" Checkbox
+        self.select_all_var = tk.BooleanVar()
+        select_all_checkbox = ttk.Checkbutton(
+            self.exceptions_frame, text="Select All", variable=self.select_all_var, command=self.toggle_select_all
+        )
+        select_all_checkbox.grid(row=0, column=0, sticky="w")
+
+        # Individual checkboxes for exceptions
+        for idx, exception in enumerate(standard_exceptions, start=1):
+            var = tk.BooleanVar()
+            checkbox = ttk.Checkbutton(self.exceptions_frame, text=exception, variable=var)
+            checkbox.grid(row=idx, column=0, sticky="w")
+            self.exceptions_vars[exception] = var
+
+        # Legal Description
+        ttk.Label(self.page_area, text="Legal Description/Derivation Clause:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        legal_text = tk.Text(self.page_area, height=5, width=50)
+        legal_text.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
+        self.transaction_data["Legal Description"] = legal_text
+
+        # Revised checkbox with descriptive text
+
+        ttk.Label(self.page_area, text="Check only if submitting a revision of an existing transaction.", wraplength=400).grid(
+            row=5, column=0, columnspan=2, sticky="w", padx=5, pady=(5, 0)
+        )
+
+        self.revised_var = tk.BooleanVar()
+        revised_checkbox = ttk.Checkbutton(self.page_area, text="Revised", variable=self.revised_var)
+        revised_checkbox.grid(row=6, column=0, sticky="w", padx=5, pady=5)
+
+        self.transaction_data["Revised"] = self.revised_var
+
+
+    def toggle_select_all(self):
+        """Toggle all checkboxes when 'Select All' is clicked."""
+        select_all_state = self.select_all_var.get()
+        for var in self.exceptions_vars.values():
+            var.set(select_all_state)
+
 
     def next_page(self):
         """Navigate to the next page or submit the form."""
@@ -172,7 +241,7 @@ class TransactionForm(ttk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Transaction Form")
-    root.geometry("800x600")
+    root.geometry("1000x750")
 
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)

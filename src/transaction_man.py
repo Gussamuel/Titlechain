@@ -135,7 +135,7 @@ class TransactionManager(ttk.Frame):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("Transaction Manager")
-    root.geometry("1200x600")
+    root.geometry("1000x750")
 
     # Configure grid for dynamic resizing
     root.grid_rowconfigure(0, weight=1)

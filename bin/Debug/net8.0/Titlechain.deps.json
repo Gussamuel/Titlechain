@@ -1,0 +1,77 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "Titlechain/1.0.0": {
+        "dependencies": {
+          "SoftPro.Select.Core.Sdk": "4.5.5"
+        },
+        "runtime": {
+          "Titlechain.dll": {}
+        }
+      },
+      "SoftPro.Select.Core.Sdk/4.5.5": {
+        "runtime": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.ClientModel.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.Documents.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.EntityModel.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.Imaging.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.Register.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.Reporting.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          },
+          "lib/net46/SoftPro.Select.Client.dll": {
+            "assemblyVersion": "4.5.0.0",
+            "fileVersion": "4.5.61156.1"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Titlechain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SoftPro.Select.Core.Sdk/4.5.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Kv+rzx9u0sl/2ki/3ROPl0soqvdH9sd32dJ/9fmjHqdKOarkACmJIrVhOboBdT6aGvrSm343vswefuIbDj3mBQ==",
+      "path": "softpro.select.core.sdk/4.5.5",
+      "hashPath": "softpro.select.core.sdk.4.5.5.nupkg.sha512"
+    }
+  }
+}

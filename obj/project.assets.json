@@ -1,0 +1,141 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "SoftPro.Select.Core.Sdk/4.5.5": {
+        "type": "package",
+        "compile": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        },
+        "runtime": {
+          "lib/net46/SoftPro.Accounting.Client.dll": {},
+          "lib/net46/SoftPro.ClientModel.dll": {},
+          "lib/net46/SoftPro.Documents.Client.dll": {},
+          "lib/net46/SoftPro.EntityModel.dll": {},
+          "lib/net46/SoftPro.Imaging.Client.dll": {},
+          "lib/net46/SoftPro.OrderTracking.Client.dll": {},
+          "lib/net46/SoftPro.ProceedsTracking.Client.dll": {},
+          "lib/net46/SoftPro.Register.Client.dll": {},
+          "lib/net46/SoftPro.Reporting.Client.dll": {},
+          "lib/net46/SoftPro.Select.Client.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SoftPro.Select.Core.Sdk/4.5.5": {
+      "sha512": "Kv+rzx9u0sl/2ki/3ROPl0soqvdH9sd32dJ/9fmjHqdKOarkACmJIrVhOboBdT6aGvrSm343vswefuIbDj3mBQ==",
+      "type": "package",
+      "path": "softpro.select.core.sdk/4.5.5",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net46/SoftPro.Accounting.Client.dll",
+        "lib/net46/SoftPro.ClientModel.dll",
+        "lib/net46/SoftPro.Documents.Client.dll",
+        "lib/net46/SoftPro.EntityModel.dll",
+        "lib/net46/SoftPro.Imaging.Client.dll",
+        "lib/net46/SoftPro.OrderTracking.Client.dll",
+        "lib/net46/SoftPro.ProceedsTracking.Client.dll",
+        "lib/net46/SoftPro.Register.Client.dll",
+        "lib/net46/SoftPro.Reporting.Client.dll",
+        "lib/net46/SoftPro.Select.Client.dll",
+        "softpro.select.core.sdk.4.5.5.nupkg.sha512",
+        "softpro.select.core.sdk.nuspec"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "SoftPro.Select.Core.Sdk >= 4.5.5"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\samhs\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\samhs\\Desktop\\Titlechain\\Titlechain.csproj",
+      "projectName": "Titlechain",
+      "projectPath": "C:\\Users\\samhs\\Desktop\\Titlechain\\Titlechain.csproj",
+      "packagesPath": "C:\\Users\\samhs\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\samhs\\Desktop\\Titlechain\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\samhs\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "SoftPro.Select.Core.Sdk": {
+            "target": "Package",
+            "version": "[4.5.5, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.405/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core.Sdk 4.5.5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core.Sdk",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

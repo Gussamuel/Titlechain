@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "ZO5btCLfeyk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\samhs\\Desktop\\Titlechain\\Titlechain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\samhs\\.nuget\\packages\\softpro.select.core.sdk\\4.5.5\\softpro.select.core.sdk.4.5.5.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'SoftPro.Select.Core.Sdk 4.5.5' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0'. This package may not be fully compatible with your project.",
+      "libraryId": "SoftPro.Select.Core.Sdk",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}
