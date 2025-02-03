@@ -47,7 +47,6 @@ class TransactionManager(ttk.Frame):
                 "Standard Policy Exceptions", 
                 "Property Specific Exceptions", 
                 "Legal Description/Derivation Clause",
-                "Revised",
                 "Revision",
                 "Remaining Time"
             ),
