@@ -80,7 +80,7 @@ class TransactionForm(ttk.Frame):
 
         for idx, field in enumerate(fields + optional_fields):
             ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
-            entry = ttk.Entry(self.page_area, width=40)
+            entry = tk.Text(self.page_area, height=1, width=30)
             entry.grid(row=idx + 1, column=1, sticky="ew", padx=10, pady=5)
             self.entry_fields[field] = entry
 
@@ -97,7 +97,7 @@ class TransactionForm(ttk.Frame):
 
         # Coverage Amount
         ttk.Label(self.page_area, text="Coverage Amount:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
-        entry = ttk.Entry(self.page_area, width=30)
+        entry = tk.Text(self.page_area, height=1, width=30)
         entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=10, pady=5)
         self.transaction_fields["Coverage Amount"] = entry
 
@@ -152,8 +152,14 @@ class TransactionForm(ttk.Frame):
         # Property Details validation
         if page_title == "Property Details/Policy Date":
             for field, entry in self.entry_fields.items():
-                if field != "Apt/Building (if applicable)" and not entry.get().strip():
-                    errors.append(entry)
+                if field != "Apt/Building (if applicable)":
+                    if isinstance(entry, tk.Text):
+                        value = entry.get("1.0", tk.END).strip()  # For tk.Text
+                    else:
+                        value = entry.get().strip()  # For ttk.Entry
+                    
+                    if not value:
+                        errors.append(entry)
 
         # Transaction Details validation
         elif page_title == "Transaction Details":
@@ -196,3 +202,24 @@ class TransactionForm(ttk.Frame):
         else:
             self.current_page_index += 1
             self.render_page()
+
+    def confirm_submission(self):
+        """Show confirmation before submission."""
+        confirm = messagebox.askyesno(
+            "Confirm Submission",
+            "Are you sure you want to submit? You will have 15 minutes to edit or cancel this submission if confirmed."
+        )
+        if confirm:
+            self.submit_transaction()
+
+    def submit_transaction(self):
+        """Capture all data and submit the form."""
+        transaction_data = {field: entry.get().strip() for field, entry in self.entry_fields.items()}
+        transaction_data.update({field: text.get("1.0", tk.END).strip() for field, text in self.transaction_fields.items()})
+        transaction_data["Standard Policy Exceptions"] = [key for key, var in self.exceptions_vars.items() if var.get()]
+        transaction_data["Legal Description"] = self.legal_description.get("1.0", tk.END).strip()
+
+        if self.add_transaction_callback:
+            self.add_transaction_callback(transaction_data)
+        messagebox.showinfo("Success", "Transaction submitted successfully!")
+        self.reset_form()
