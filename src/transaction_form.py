@@ -214,12 +214,49 @@ class TransactionForm(ttk.Frame):
 
     def submit_transaction(self):
         """Capture all data and submit the form."""
-        transaction_data = {field: entry.get().strip() for field, entry in self.entry_fields.items()}
-        transaction_data.update({field: text.get("1.0", tk.END).strip() for field, text in self.transaction_fields.items()})
-        transaction_data["Standard Policy Exceptions"] = [key for key, var in self.exceptions_vars.items() if var.get()]
+
+        # Collect input values
+        transaction_data = {
+            field: entry.get("1.0", tk.END).strip() if isinstance(entry, tk.Text) else entry.get().strip()
+            for field, entry in self.entry_fields.items()
+        }
+
+        transaction_data.update({
+            field: text.get("1.0", tk.END).strip()
+            for field, text in self.transaction_fields.items()
+        })
+
+        # Format Standard Policy Exceptions as "1-5"
+        selected_exceptions = [
+            str(idx + 1) for idx, (key, var) in enumerate(self.exceptions_vars.items()) if var.get()
+        ]
+        transaction_data["Standard Policy Exceptions"] = ", ".join(selected_exceptions) if selected_exceptions else "None"
+
+        # Capture legal description
         transaction_data["Legal Description"] = self.legal_description.get("1.0", tk.END).strip()
 
+        # Capture revised checkbox
+        transaction_data["Revision"] = "Yes" if self.revised_var.get() else "No"
+
+        # ✅ Debugging messages
+        print("DEBUG: Attempting to submit transaction...")
+        print(transaction_data)  # Show transaction data before sending
+
+        # ✅ Check if callback exists before calling
         if self.add_transaction_callback:
-            self.add_transaction_callback(transaction_data)
+            try:
+                self.add_transaction_callback(transaction_data)  # Send to TransactionManager
+                print("✅ DEBUG: Transaction successfully sent to TransactionManager.")  # Should appear if successful
+            except Exception as e:
+                print(f"⚠️ ERROR: {e}")  # Catch and print any errors
+                messagebox.showerror("Error", f"Transaction submission failed: {e}")
+                return
+        else:
+            print("⚠️ ERROR: No transaction manager callback found!")  # If callback isn't assigned
+
+        # ✅ If successful, show success message
         messagebox.showinfo("Success", "Transaction submitted successfully!")
         self.reset_form()
+
+
+

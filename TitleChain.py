@@ -6,9 +6,11 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 from ttkbootstrap import Style
-from ttkbootstrap.widgets import Button  # ✅ Import ttkbootstrap buttons
+from ttkbootstrap.widgets import Button
 from src.blockchain_tab import BlockchainTab
 from src.title_search import TitleTab
+from src.transaction_form import TransactionForm
+from src.transaction_man import TransactionManager
 
 # ✅ Load SoftPro assemblies (ensure correct path)
 sdk_path = os.path.abspath(os.path.dirname(__file__))  # TitleChain root folder
@@ -55,6 +57,12 @@ class TitleChainApp(tk.Tk):
 
         self.title("TitleChain")
         self.geometry("1200x1000")
+
+        # Initialize Transaction Manager
+        self.transaction_manager = TransactionManager(self)
+
+        # Pass transaction manager callback to form
+        self.transaction_form = TransactionForm(self, add_transaction_callback=self.transaction_manager.add_pending_transaction)
 
         # ✅ Apply ttkbootstrap theme for modern styling
         self.style = Style(theme="flatly")  # Try "superhero", "minty", "darkly" for different looks

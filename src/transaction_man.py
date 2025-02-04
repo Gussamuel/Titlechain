@@ -70,6 +70,9 @@ class TransactionManager(ttk.Frame):
         # Bind resize event to dynamically adjust column widths
         tree_frame.bind("<Configure>", self.adjust_column_widths)
 
+        # Start the auto-update timer for expired transactions
+        self.after(1000, self.remove_expired_transactions)
+
     def adjust_column_widths(self, event=None):
         """Dynamically adjust column widths to fit the Treeview's width."""
         total_width = self.tree.winfo_width()
@@ -82,6 +85,19 @@ class TransactionManager(ttk.Frame):
     def add_pending_transaction(self, transaction):
         """Add a transaction to the pending list with a timestamp."""
         transaction['timestamp'] = datetime.now()
+
+        # Convert Standard Policy Exceptions to numerical format
+        standard_exceptions_map = {
+            "1. Rights or claims of parties in possession not shown by the public records.": "1",
+            "2. Easements or claims of easements not shown by the public records.": "2",
+            "3. Encroachments, overlaps, boundary line disputes, or other matters disclosed by an accurate survey.": "3",
+            "4. Any lien, or right to a lien, for services, labor or material not shown by the public records.": "4",
+            "5. Taxes or special assessments not yet due or payable.": "5",
+        }
+
+        selected_exceptions = [standard_exceptions_map[exc] for exc in transaction.get("Standard Policy Exceptions", [])]
+        transaction["Standard Policy Exceptions"] = ", ".join(selected_exceptions) if selected_exceptions else "None"
+
         self.pending_transactions.append(transaction)
         self.update_transactions()
 
@@ -91,19 +107,36 @@ class TransactionManager(ttk.Frame):
         for row in self.tree.get_children():
             self.tree.delete(row)
 
-        # Add pending transactions to the Treeview
         now = datetime.now()
         for idx, transaction in enumerate(self.pending_transactions):
             remaining_time = max(timedelta(minutes=15) - (now - transaction['timestamp']), timedelta(0))
+            
+            # Add the transaction to the Treeview
             self.tree.insert("", "end", iid=idx, values=(
                 transaction.get("Property Address", "N/A"),
                 transaction.get("Policy Date", "N/A"),
                 transaction.get("Vested Parties", "N/A"),
+                transaction.get("Underwriters", "N/A"),
+                transaction.get("Coverage Amount", "N/A"),
+                transaction.get("Owner's Policy", "N/A"),
+                transaction.get("Lender's Policy", "N/A"),
                 transaction.get("Standard Policy Exceptions", "N/A"),
                 transaction.get("Property Specific Exceptions", "N/A"),
                 transaction.get("Legal Description/Derivation Clause", "N/A"),
-                str(remaining_time)
+                transaction.get("Revision", "N/A"),
+                str(remaining_time)  # Store remaining time in Treeview
             ))
+
+    def remove_expired_transactions(self):
+        """Remove transactions that have expired (after 15 minutes)."""
+        now = datetime.now()
+        self.pending_transactions = [
+            transaction for transaction in self.pending_transactions
+            if now - transaction['timestamp'] < timedelta(minutes=15)
+        ]
+
+        self.update_transactions()
+        self.after(1000, self.remove_expired_transactions)  # Run every 1 second
 
     def edit_transaction(self):
         """Edit the selected transaction."""
@@ -115,7 +148,6 @@ class TransactionManager(ttk.Frame):
         idx = int(selected_item[0])
         transaction = self.pending_transactions[idx]
 
-        # Editing logic can be added here (e.g., open a new form pre-filled with transaction data)
         messagebox.showinfo("Edit Transaction", f"Edit functionality not implemented yet for:\n{transaction}")
 
     def delete_transaction(self):
@@ -136,34 +168,10 @@ if __name__ == "__main__":
     root.title("Transaction Manager")
     root.geometry("1000x750")
 
-    # Configure grid for dynamic resizing
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
 
     transaction_manager = TransactionManager(root)
     transaction_manager.grid(row=0, column=0, sticky="nsew")
-
-    # Example transactions
-    example_transactions = [
-        {
-            "Property Address": "600 E Trinity Lane #303, Nashville, TN 37207",
-            "Policy Date": "10/30/24",
-            "Vested Parties": "Ashley Akers, a single woman",
-            "Standard Policy Exceptions": "Standard exceptions",
-            "Property Specific Exceptions": "Specific exceptions",
-            "Legal Description/Derivation Clause": "Exhibit A",
-        },
-        {
-            "Property Address": "123 Main Street, Anytown, USA",
-            "Policy Date": "11/15/24",
-            "Vested Parties": "John Doe",
-            "Standard Policy Exceptions": "Standard exceptions",
-            "Property Specific Exceptions": "Specific exceptions",
-            "Legal Description/Derivation Clause": "Exhibit B",
-        },
-    ]
-
-    for transaction in example_transactions:
-        transaction_manager.add_pending_transaction(transaction)
 
     root.mainloop()
