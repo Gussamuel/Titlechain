@@ -5,7 +5,7 @@ a = Analysis(
     ['TitleChain.py'],
     pathex=[],
     binaries=[],
-    datas=[('SoftPro.Select.Client.dll', 'dependencies/'), ('SoftPro.Documents.Client.dll', 'dependencies/'), ('SoftPro.Accounting.Client.dll', 'dependencies/'), ('stateTitle.json', 'dependencies/')],
+    datas=[('SoftPro.Select.Client.dll', '.'), ('SoftPro.Documents.Client.dll', '.'), ('SoftPro.Accounting.Client.dll', '.'), ('stateTitle.json', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
