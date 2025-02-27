@@ -104,7 +104,10 @@ class TransactionManager(ttk.Frame):
         hsb.grid(row=1, column=0, sticky='ew')
         
         tree_frame.bind("<Configure>", self.adjust_column_widths)
+        # Bind single-click for selection toggling.
         self.tree.bind("<Button-1>", self.on_tree_click)
+        # Bind double-click for showing transaction details.
+        self.tree.bind("<Double-1>", self.on_double_click)
         
         # Start the timer for processing expired transactions.
         self.after(1000, self.remove_expired_transactions)
@@ -126,6 +129,7 @@ class TransactionManager(ttk.Frame):
         if region != "cell":
             return
         col = self.tree.identify_column(event.x)
+        # When clicking on the "Select" column, toggle selection.
         if col == "#1":
             rowid = self.tree.identify_row(event.y)
             if rowid:
@@ -136,8 +140,49 @@ class TransactionManager(ttk.Frame):
                 current = self.pending_transactions[idx].get("selected", False)
                 self.pending_transactions[idx]["selected"] = not current
                 self.dirty = True
-                print("DEBUG: Toggled selection for transaction at index", idx)
+                print("DEBUG: ✅ Toggled selection for transaction at index", idx)
                 self.update_transactions()
+    
+    def on_double_click(self, event):
+        # Get the row that was double-clicked.
+        rowid = self.tree.identify_row(event.y)
+        if not rowid:
+            return
+        # Use the tree index.
+        idx = self.tree.index(rowid)
+        try:
+            transaction = self.pending_transactions[idx]
+        except IndexError:
+            print("DEBUG: ❌ Double-click index out of range.")
+            return
+        self.show_transaction_details(transaction)
+        print("DEBUG: ✅ Displaying transaction details.")
+    
+    def show_transaction_details(self, transaction):
+        details_win = tk.Toplevel(self)
+        details_win.title("Transaction Details")
+        frame = ttk.Frame(details_win, padding=10)
+        frame.pack(fill="both", expand=True)
+        
+        fields = [
+            ("Property Address", transaction.get("Property Address", "N/A")),
+            ("Policy Date", transaction.get("Policy Date", "N/A")),
+            ("Vested Parties", transaction.get("Vested Parties", "N/A")),
+            ("Underwriters", transaction.get("Underwriters", "N/A")),
+            ("Coverage Amount", transaction.get("Coverage Amount", "N/A")),
+            ("Owner's Policy", transaction.get("Owner's Policy", "N/A")),
+            ("Lender's Policy", transaction.get("Lender's Policy", "N/A")),
+            ("Standard Policy Exceptions", transaction.get("Standard Policy Exceptions", "N/A")),
+            ("Property Specific Exceptions", transaction.get("Property Specific Exceptions", "N/A")),
+            ("Legal Description/Derivation Clause", transaction.get("Legal Description/Derivation Clause", "N/A")),
+            ("Revision", transaction.get("Revision", "N/A"))
+        ]
+        
+        for idx, (key, value) in enumerate(fields):
+            ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w").grid(row=idx, column=0, sticky="w", pady=2)
+            ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w").grid(row=idx, column=1, sticky="w", pady=2)
+        
+        ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
     
     def add_pending_transaction(self, transaction):
         transaction['timestamp'] = datetime.now()
