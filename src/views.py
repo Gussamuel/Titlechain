@@ -164,7 +164,7 @@ class PropertyView(ttk.Frame):
             print("DEBUG: ❌ Double-click index out of range.")
             return
         self.show_property_details(prop)
-        print("DEBUG: ✅ Displaying details.")
+        print("DEBUG: ✅ Displaying transaction details.")
     
     def show_property_details(self, prop):
         details_win = tk.Toplevel(self)

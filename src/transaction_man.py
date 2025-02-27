@@ -259,6 +259,9 @@ class TransactionManager(ttk.Frame):
     def save_transactions_to_file(self):
         data_to_save = []
         for transaction in self.pending_transactions:
+            # Only save transactions that haven't been processed.
+            if transaction.get("processed", False):
+                continue
             t = transaction.copy()
             if "timestamp" in t and isinstance(t["timestamp"], datetime):
                 t["timestamp"] = t["timestamp"].isoformat()
@@ -272,21 +275,23 @@ class TransactionManager(ttk.Frame):
     
     def remove_expired_transactions(self):
         now = datetime.now()
-        expired = []
         remaining = []
         # Using 1 minute for testing; change to 15 minutes for production.
         for transaction in self.pending_transactions:
+            # If already processed, skip it.
+            if transaction.get("processed", False):
+                continue
             if now - transaction['timestamp'] >= timedelta(minutes=1):
-                expired.append(transaction)
+                try:
+                    self.submit_to_blockchain(transaction)
+                    print("DEBUG: ✅ Transaction submitted to blockchain.")
+                except Exception as e:
+                    print("DEBUG: ❌ Error submitting to blockchain:", e)
+                    self.save_transaction_to_properties(transaction)
+                # Mark as processed so it won't be handled again.
+                transaction["processed"] = True
             else:
                 remaining.append(transaction)
-        for transaction in expired:
-            try:
-                self.submit_to_blockchain(transaction)
-                print("DEBUG: ✅ Transaction submitted to blockchain.")
-            except Exception as e:
-                print("DEBUG: ❌ Error submitting to blockchain:", e)
-                self.save_transaction_to_properties(transaction)
         if len(remaining) != len(self.pending_transactions):
             self.dirty = True
         self.pending_transactions = remaining
