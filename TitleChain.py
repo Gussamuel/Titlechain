@@ -25,9 +25,9 @@ required_dlls = [
 
 missing_dlls = [dll for dll in required_dlls if not os.path.exists(os.path.join(sdk_path, dll))]
 if missing_dlls:
-    raise FileNotFoundError(f"❌ Missing DLLs in {sdk_path}: {missing_dlls}")
+    raise FileNotFoundError(f"DEBUG: ❌ Missing DLLs in {sdk_path}: {missing_dlls}")
 
-print("✅ All required DLLs are present in the TitleChain root folder!")
+print("DEBUG: ✅ All required DLLs are present in the TitleChain root folder!")
 
 # ✅ Initialize pythonnet
 pythonnet.load("coreclr")
@@ -37,19 +37,9 @@ try:
     clr.AddReference(os.path.join(sdk_path, "SoftPro.Select.Client.dll"))
     clr.AddReference(os.path.join(sdk_path, "SoftPro.Documents.Client.dll"))
     clr.AddReference(os.path.join(sdk_path, "SoftPro.Accounting.Client.dll"))
-    print("✅ SoftPro DLLs loaded successfully!")
+    print("DEBUG: ✅ SoftPro DLLs loaded successfully!")
 except Exception as e:
-    print(f"❌ Error loading SoftPro DLLs: {e}")
-
-# ✅ Import SoftPro components
-try:
-    from SoftPro.Select.Client import SelectClient
-    from SoftPro.Documents.Client import DocumentManager
-    from SoftPro.Accounting.Client import AccountingManager
-    print("✅ SoftPro modules imported successfully!")
-except ImportError as e:
-    print(f"❌ Import Error: {e}")
-
+    print(f"DEBUG: ❌ Error loading SoftPro DLLs: {e}")
 
 class TitleChainApp(tk.Tk):
     def __init__(self):

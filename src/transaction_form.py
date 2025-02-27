@@ -13,7 +13,7 @@ class TransactionForm(ttk.Frame):
             "Policy Exceptions and Revisions"
         ]
 
-        # Data to store entered values
+        # Data to store entered values (from all pages)
         self.transaction_data = {}
         self.current_page_index = 0
 
@@ -72,7 +72,8 @@ class TransactionForm(ttk.Frame):
         self.next_button["text"] = "Submit" if self.current_page_index == len(self.pages) - 1 else "Next"
 
     def render_property_details(self):
-        """Render fields for Property Address and Policy Date."""
+        """Render fields for Property Address and Policy Date.
+        Using tk.Text for single-line inputs but binding Tab for focus traversal."""
         fields = ["Street", "City", "State", "Zip", "Policy Date (MM/DD/YYYY)"]
         optional_fields = ["Apt/Building (if applicable)"]
 
@@ -82,6 +83,12 @@ class TransactionForm(ttk.Frame):
             ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
             entry = tk.Text(self.page_area, height=1, width=30)
             entry.grid(row=idx + 1, column=1, sticky="ew", padx=10, pady=5)
+            # Bind Tab and Shift-Tab for focus traversal.
+            entry.bind("<Tab>", lambda event: event.widget.tk_focusNext().focus() or "break")
+            entry.bind("<Shift-Tab>", lambda event: event.widget.tk_focusPrev().focus() or "break")
+            # Reinsert saved data if any.
+            if field in self.transaction_data:
+                entry.insert("1.0", self.transaction_data[field])
             self.entry_fields[field] = entry
 
     def render_transaction_details(self):
@@ -93,16 +100,46 @@ class TransactionForm(ttk.Frame):
             ttk.Label(self.page_area, text=f"{field}:").grid(row=idx + 1, column=0, sticky="w", padx=10, pady=5)
             text_area = tk.Text(self.page_area, height=6, width=50)
             text_area.grid(row=idx + 1, column=1, columnspan=2, sticky="nsew", padx=10, pady=5)
+            if field in self.transaction_data:
+                text_area.insert("1.0", self.transaction_data[field])
             self.transaction_fields[field] = text_area
 
-        # Coverage Amount
+        # Coverage Amount (placed at row 3) as a single-line input.
         ttk.Label(self.page_area, text="Coverage Amount:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
         entry = tk.Text(self.page_area, height=1, width=30)
         entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=10, pady=5)
+        entry.bind("<Tab>", lambda event: event.widget.tk_focusNext().focus() or "break")
+        entry.bind("<Shift-Tab>", lambda event: event.widget.tk_focusPrev().focus() or "break")
+        if "Coverage Amount" in self.transaction_data:
+            entry.insert("1.0", self.transaction_data["Coverage Amount"])
         self.transaction_fields["Coverage Amount"] = entry
 
+        # --- New Section: Owner's Policy / Lender's Policy ---
+        self.owners_policy_var = tk.BooleanVar()
+        self.lenders_policy_var = tk.BooleanVar()
+
+        def on_owners_policy_change():
+            if self.owners_policy_var.get():
+                self.lenders_policy_var.set(False)
+                print("DEBUG: Owner's Policy checked, Lender's Policy unchecked.")
+            else:
+                print("ℹ️ DEBUG: Owner's Policy unchecked.")
+
+        def on_lenders_policy_change():
+            if self.lenders_policy_var.get():
+                self.owners_policy_var.set(False)
+                print("DEBUG: Lender's Policy checked, Owner's Policy unchecked.")
+            else:
+                print("ℹ️ DEBUG: Lender's Policy unchecked.")
+
+        owners_policy_checkbox = ttk.Checkbutton(self.page_area, text="Owner's Policy", variable=self.owners_policy_var, command=on_owners_policy_change)
+        owners_policy_checkbox.grid(row=4, column=0, sticky="w", padx=10, pady=5)
+
+        lenders_policy_checkbox = ttk.Checkbutton(self.page_area, text="Lender's Policy", variable=self.lenders_policy_var, command=on_lenders_policy_change)
+        lenders_policy_checkbox.grid(row=4, column=1, sticky="w", padx=10, pady=5)
+
     def render_policy_exceptions_and_revisions(self):
-        """Render fields for Standard Policy Exceptions and Legal Description."""
+        """Render fields for Standard Policy Exceptions, Legal Description, and Property Specific Exceptions."""
         self.exceptions_vars = {}
 
         ttk.Label(self.page_area, text="Standard Policy Exceptions:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
@@ -125,18 +162,29 @@ class TransactionForm(ttk.Frame):
             checkbox = ttk.Checkbutton(self.page_area, text=exception, variable=var)
             checkbox.grid(row=idx, column=0, sticky="w")
             self.exceptions_vars[exception] = var
+            if "Standard Policy Exceptions" in self.transaction_data:
+                exception_number = str(idx - 2)
+                if exception_number in self.transaction_data["Standard Policy Exceptions"]:
+                    var.set(True)
 
-        # Legal Description
-        ttk.Label(self.page_area, text="Legal Description/Derivation Clause:").grid(row=8, column=0, sticky="w", padx=10, pady=5)
+        ttk.Label(self.page_area, text="Legal Description/Derivation Clause: (if None, type 'None')").grid(row=8, column=0, sticky="w", padx=10, pady=5)
         self.legal_description = tk.Text(self.page_area, height=5, width=50)
         self.legal_description.grid(row=9, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
+        if "Legal Description" in self.transaction_data:
+            self.legal_description.insert("1.0", self.transaction_data["Legal Description"])
 
-        ttk.Label(self.page_area, text="Check the 'Revised' box only if this transaction already exists on the blockchain and needs to be updated or replaced:").grid(row=10, column=0, sticky="w", padx=10, pady=5)
+        ttk.Label(self.page_area, text="Property Specific Exceptions: (if None, type 'None')").grid(row=10, column=0, sticky="w", padx=10, pady=5)
+        self.property_specific_exceptions = tk.Text(self.page_area, height=5, width=50)
+        self.property_specific_exceptions.grid(row=11, column=0, columnspan=2, sticky="nsew", padx=10, pady=5)
+        if "Property Specific Exceptions" in self.transaction_data:
+            self.property_specific_exceptions.insert("1.0", self.transaction_data["Property Specific Exceptions"])
 
-        # Revised checkbox
+        ttk.Label(self.page_area, text="Check the 'Revised' box only if this transaction already exists on the blockchain and needs to be updated or replaced:").grid(row=12, column=0, sticky="w", padx=10, pady=5)
         self.revised_var = tk.BooleanVar()
         revised_checkbox = ttk.Checkbutton(self.page_area, text="Revised", variable=self.revised_var)
-        revised_checkbox.grid(row=11, column=0, sticky="w", padx=5, pady=5)
+        revised_checkbox.grid(row=13, column=0, sticky="w", padx=5, pady=5)
+        if "Revision" in self.transaction_data:
+            self.revised_var.set(self.transaction_data["Revision"] == "Yes")
 
     def toggle_select_all(self):
         """Toggle all checkboxes when 'Select All' is clicked."""
@@ -144,51 +192,69 @@ class TransactionForm(ttk.Frame):
         for var in self.exceptions_vars.values():
             var.set(select_all_state)
 
+    def save_current_page_data(self):
+        """Save data from the currently visible page into self.transaction_data."""
+        page_title = self.pages[self.current_page_index]
+        print(f"DEBUG: Saving data from page: {page_title}")
+        if page_title == "Property Details/Policy Date":
+            for field, entry in self.entry_fields.items():
+                self.transaction_data[field] = entry.get("1.0", tk.END).strip()
+        elif page_title == "Transaction Details":
+            for field, widget in self.transaction_fields.items():
+                self.transaction_data[field] = widget.get("1.0", tk.END).strip()
+            self.transaction_data["Owner's Policy"] = "Yes" if self.owners_policy_var.get() else "No"
+            self.transaction_data["Lender's Policy"] = "Yes" if self.lenders_policy_var.get() else "No"
+        elif page_title == "Policy Exceptions and Revisions":
+            selected_exceptions = [str(idx + 1) for idx, (key, var) in enumerate(self.exceptions_vars.items()) if var.get()]
+            self.transaction_data["Standard Policy Exceptions"] = ", ".join(selected_exceptions) if selected_exceptions else "None"
+            self.transaction_data["Legal Description"] = self.legal_description.get("1.0", tk.END).strip()
+            self.transaction_data["Property Specific Exceptions"] = self.property_specific_exceptions.get("1.0", tk.END).strip()
+            self.transaction_data["Revision"] = "Yes" if self.revised_var.get() else "No"
+        print("DEBUG: ✅ Current saved data:", self.transaction_data)
+
     def validate_page(self):
         """Ensure required fields are filled before moving forward."""
         page_title = self.pages[self.current_page_index]
-        errors = []
-
-        # Property Details validation
+        missing_fields = []
         if page_title == "Property Details/Policy Date":
-            for field, entry in self.entry_fields.items():
-                if field != "Apt/Building (if applicable)":
-                    if isinstance(entry, tk.Text):
-                        value = entry.get("1.0", tk.END).strip()  # For tk.Text
-                    else:
-                        value = entry.get().strip()  # For ttk.Entry
-                    
-                    if not value:
-                        errors.append(entry)
-
-        # Transaction Details validation
+            optional_fields = ["Apt/Building (if applicable)"]
+            for field, widget in self.entry_fields.items():
+                if field in optional_fields:
+                    continue
+                value = widget.get("1.0", tk.END).strip()
+                if not value:
+                    missing_fields.append(field)
+                    widget.config(bg="lightcoral")
         elif page_title == "Transaction Details":
             for field, widget in self.transaction_fields.items():
-                if isinstance(widget, tk.Text):
-                    if not widget.get("1.0", tk.END).strip():
-                        errors.append(widget)
-                elif not widget.get().strip():
-                    errors.append(widget)
-
-        # Policy Exceptions validation
+                if widget.winfo_class() == "Text":
+                    value = widget.get("1.0", tk.END).strip()
+                else:
+                    value = widget.get().strip()
+                if not value:
+                    missing_fields.append(field)
+                    widget.config(bg="lightcoral")
+            if not (self.owners_policy_var.get() or self.lenders_policy_var.get()):
+                missing_fields.append("Owner's/Lender's Policy")
         elif page_title == "Policy Exceptions and Revisions":
             if not any(var.get() for var in self.exceptions_vars.values()):
-                errors.append("exception")
+                missing_fields.append("Standard Policy Exceptions")
             if not self.legal_description.get("1.0", tk.END).strip():
-                errors.append(self.legal_description)
-
-        if errors:
-            messagebox.showerror("Error", "Fill out all required fields.")
-            for field in errors:
-                if isinstance(field, tk.Widget):
-                    field.config(bg="lightcoral")
+                missing_fields.append("Legal Description/Derivation Clause")
+                self.legal_description.config(bg="lightcoral")
+            if not self.property_specific_exceptions.get("1.0", tk.END).strip():
+                missing_fields.append("Property Specific Exceptions")
+                self.property_specific_exceptions.config(bg="lightcoral")
+        if missing_fields:
+            error_message = "Fill out all required fields:\n" + "\n".join(missing_fields)
+            messagebox.showerror("Error", error_message)
             return False
-
         return True
-    
+
     def previous_page(self):
         """Navigate to the previous page."""
         if self.current_page_index > 0:
+            self.save_current_page_data()
             self.current_page_index -= 1
             self.render_page()
 
@@ -196,7 +262,7 @@ class TransactionForm(ttk.Frame):
         """Navigate to the next page with validation."""
         if not self.validate_page():
             return
-
+        self.save_current_page_data()
         if self.current_page_index == len(self.pages) - 1:
             self.confirm_submission()
         else:
@@ -214,49 +280,34 @@ class TransactionForm(ttk.Frame):
 
     def submit_transaction(self):
         """Capture all data and submit the form."""
-
-        # Collect input values
-        transaction_data = {
-            field: entry.get("1.0", tk.END).strip() if isinstance(entry, tk.Text) else entry.get().strip()
-            for field, entry in self.entry_fields.items()
-        }
-
-        transaction_data.update({
-            field: text.get("1.0", tk.END).strip()
-            for field, text in self.transaction_fields.items()
-        })
-
-        # Format Standard Policy Exceptions as "1-5"
-        selected_exceptions = [
-            str(idx + 1) for idx, (key, var) in enumerate(self.exceptions_vars.items()) if var.get()
-        ]
-        transaction_data["Standard Policy Exceptions"] = ", ".join(selected_exceptions) if selected_exceptions else "None"
-
-        # Capture legal description
-        transaction_data["Legal Description"] = self.legal_description.get("1.0", tk.END).strip()
-
-        # Capture revised checkbox
-        transaction_data["Revision"] = "Yes" if self.revised_var.get() else "No"
-
-        # ✅ Debugging messages
+        self.save_current_page_data()
+        transaction_data = self.transaction_data.copy()
         print("DEBUG: Attempting to submit transaction...")
-        print(transaction_data)  # Show transaction data before sending
-
-        # ✅ Check if callback exists before calling
+        print("DEBUG: Full transaction data:", transaction_data)
         if self.add_transaction_callback:
             try:
-                self.add_transaction_callback(transaction_data)  # Send to TransactionManager
-                print("✅ DEBUG: Transaction successfully sent to TransactionManager.")  # Should appear if successful
+                self.add_transaction_callback(transaction_data)
+                print("DEBUG: ✅ Transaction successfully sent to TransactionManager.")
             except Exception as e:
-                print(f"⚠️ ERROR: {e}")  # Catch and print any errors
+                print(f"DEBUG: ⚠️ {e}")
                 messagebox.showerror("Error", f"Transaction submission failed: {e}")
                 return
         else:
-            print("⚠️ ERROR: No transaction manager callback found!")  # If callback isn't assigned
-
-        # ✅ If successful, show success message
+            print("DEBUG: ⚠️ No transaction manager callback found!")
+            return
         messagebox.showinfo("Success", "Transaction submitted successfully!")
+        print("DEBUG: ✅ Submission complete. Resetting form...")
         self.reset_form()
 
-
-
+    def reset_form(self):
+        """Reset the form to its initial state."""
+        for widget in self.page_area.winfo_children():
+            widget.destroy()
+        self.transaction_data = {}
+        self.entry_fields = {}
+        self.transaction_fields = {}
+        self.exceptions_vars = {}
+        self.current_page_index = 0
+        print("DEBUG: Resetting form; current_page_index set to", self.current_page_index)
+        self.render_page()
+        self.page_area.update_idletasks()
