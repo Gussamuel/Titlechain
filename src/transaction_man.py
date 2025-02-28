@@ -34,7 +34,6 @@ class TransactionManager(ttk.Frame):
         try:
             with open(self.pending_file, "r") as f:
                 data = json.load(f)
-            # Convert timestamp strings back to datetime objects.
             for transaction in data:
                 if "timestamp" in transaction:
                     transaction["timestamp"] = datetime.fromisoformat(transaction["timestamp"])
@@ -44,22 +43,20 @@ class TransactionManager(ttk.Frame):
             print("DEBUG: ❌ Error loading pending transactions:", e)
             self.pending_transactions = []
         
-        # Dirty flag to track if changes occur.
         self.dirty = False
 
-        # Configure grid layout for the frame.
+        # Configure grid layout.
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
-        # Button frame (only Delete Selected now)
+        # Button frame.
         button_frame = ttk.Frame(self)
         button_frame.grid(row=0, column=0, sticky="ew", pady=10, padx=10)
         button_frame.grid_columnconfigure(0, weight=1)
-        
         self.delete_button = ttk.Button(button_frame, text="Delete Selected", command=self.delete_transaction)
         self.delete_button.pack(side="left", padx=10)
         
-        # Create a frame for the Treeview and scrollbars.
+        # Frame for Treeview and scrollbars.
         tree_frame = ttk.Frame(self)
         tree_frame.grid(row=1, column=0, sticky="nsew")
         tree_frame.grid_rowconfigure(0, weight=1)
@@ -83,7 +80,6 @@ class TransactionManager(ttk.Frame):
         )
         self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
         
-        # Define headings and column alignment.
         for col in columns:
             if col == "Select":
                 self.tree.heading(col, text=col, anchor="center")
@@ -92,7 +88,6 @@ class TransactionManager(ttk.Frame):
                 self.tree.heading(col, text=col, anchor="w")
                 self.tree.column(col, anchor="w", minwidth=0)
         
-        # Minimal tweak: remove extra header padding.
         style = ttk.Style(self)
         style.configure("Treeview.Heading", padding=(0, 0))
         
@@ -105,19 +100,16 @@ class TransactionManager(ttk.Frame):
         hsb.grid(row=1, column=0, sticky='ew')
         
         tree_frame.bind("<Configure>", self.adjust_column_widths)
-        # Bind single-click for selection toggling.
         self.tree.bind("<Button-1>", self.on_tree_click)
-        # Bind double-click for showing transaction details.
         self.tree.bind("<Double-1>", self.on_double_click)
         
-        # Start the timer for processing expired transactions.
         self.after(1000, self.remove_expired_transactions)
         self.update_transactions()
     
     def adjust_column_widths(self, event=None):
         total_width = self.tree.winfo_width()
         num_columns = len(self.tree["columns"])
-        select_width = 50  # Fixed width for the Select column.
+        select_width = 50
         other_width = (total_width - select_width) // (num_columns - 1) if num_columns > 1 else total_width
         for col in self.tree["columns"]:
             if col == "Select":
@@ -130,7 +122,6 @@ class TransactionManager(ttk.Frame):
         if region != "cell":
             return
         col = self.tree.identify_column(event.x)
-        # When clicking on the "Select" column, toggle selection.
         if col == "#1":
             rowid = self.tree.identify_row(event.y)
             if rowid:
@@ -177,6 +168,9 @@ class TransactionManager(ttk.Frame):
             ("Legal Description/Derivation Clause", transaction.get("Legal Description/Derivation Clause", "N/A")),
             ("Revision", transaction.get("Revision", "N/A"))
         ]
+        if transaction.get("Revision", "No") == "Yes":
+            fields.append(("Revision Note", transaction.get("Revision Note", "N/A")))
+            fields.append(("Revision Parent Policy", transaction.get("Revision Parent Policy", "N/A")))
         
         for idx, (key, value) in enumerate(fields):
             ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w").grid(row=idx, column=0, sticky="w", pady=2)
@@ -202,7 +196,6 @@ class TransactionManager(ttk.Frame):
         transaction["Property Address"] = ", ".join([part for part in address_parts if part])
         
         transaction["Policy Date"] = transaction.get("Policy Date (MM/DD/YYYY)", "").strip()
-        # Capture new "Policy Number" field.
         transaction["Policy Number"] = transaction.get("Policy Number", "").strip()
         transaction["Legal Description/Derivation Clause"] = transaction.get("Legal Description", "").strip()
         
@@ -243,7 +236,7 @@ class TransactionManager(ttk.Frame):
                 select_display,
                 transaction.get("Property Address", "N/A"),
                 transaction.get("Policy Date", "N/A"),
-                transaction.get("Policy Number", "N/A"),   # New column
+                transaction.get("Policy Number", "N/A"),
                 transaction.get("Vested Parties", "N/A"),
                 transaction.get("Underwriters", "N/A"),
                 transaction.get("Coverage Amount", "N/A"),

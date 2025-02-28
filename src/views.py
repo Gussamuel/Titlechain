@@ -26,6 +26,23 @@ class PropertyView(ttk.Frame):
 
         self.data = []  # Store the properties data locally for filtering
 
+        # Ensure properties.json exists on startup.
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(__file__)
+        properties_file = os.path.join(base_dir, "properties.json")
+        if not os.path.exists(properties_file):
+            print("DEBUG: ❌ properties.json not found on startup. Creating new file.")
+            try:
+                with open(properties_file, "w") as f:
+                    json.dump([], f)
+                print("DEBUG: ✅ properties.json created successfully on startup.")
+            except Exception as e:
+                print("DEBUG: ❌ Could not create properties.json on startup:", e)
+        else:
+            print("DEBUG: ✅ properties.json found on startup.")
+
         # Configure the grid to make widgets expand
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -76,10 +93,12 @@ class PropertyView(ttk.Frame):
         # Bind double-click to show property details.
         self.tree.bind("<Double-1>", self.on_double_click)
 
+
     def display_no_data_message(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
         self.tree.insert("", tk.END, values=["No data available"] + [""] * (len(self.columns) - 1))
+        print("DEBUG: ✅ No properties available; displaying message.")
 
     def reset_search(self):
         self.search_var.set("")
@@ -100,12 +119,6 @@ class PropertyView(ttk.Frame):
                 else:
                     base_dir = os.path.dirname(__file__)
                 properties_file = os.path.join(base_dir, "properties.json")
-                # Create properties.json if it doesn't exist.
-                if not os.path.exists(properties_file):
-                    print("DEBUG: ❌ properties.json not found. Creating new file.")
-                    with open(properties_file, "w") as f:
-                        json.dump([], f)
-                    print("DEBUG: ✅ properties.json created successfully.")
                 with open(properties_file, "r") as f:
                     self.data = json.load(f)
                 print("DEBUG: ✅ Loaded properties from properties.json.")
@@ -131,6 +144,7 @@ class PropertyView(ttk.Frame):
                 prop.get("Legal Description/Derivation Clause", ""),
                 prop.get("Revision", "")
             ))
+        print("DEBUG: ✅ Properties refreshed.")
 
     def search_properties(self):
         query = self.search_var.get().lower()
@@ -158,8 +172,8 @@ class PropertyView(ttk.Frame):
                 prop.get("Legal Description/Derivation Clause", ""),
                 prop.get("Revision", "")
             ))
-        print("DEBUG: Searching for '", query, "'")
-        
+        print("DEBUG: Searching for:", query)
+
     def on_double_click(self, event):
         rowid = self.tree.identify_row(event.y)
         if not rowid:
@@ -172,7 +186,7 @@ class PropertyView(ttk.Frame):
             return
         self.show_property_details(prop)
         print("DEBUG: ✅ Displaying property details.")
-    
+
     def show_property_details(self, prop):
         details_win = tk.Toplevel(self)
         details_win.title("Property Details")
@@ -193,9 +207,21 @@ class PropertyView(ttk.Frame):
             ("Legal Description/Derivation Clause", prop.get("Legal Description/Derivation Clause", "N/A")),
             ("Revision", prop.get("Revision", "N/A"))
         ]
+        # If revision is "Yes", display the additional revision details.
+        if prop.get("Revision", "No") == "Yes":
+            fields.append(("Revision Note", prop.get("Revision Note", "N/A")))
+            fields.append(("Revision Parent Policy", prop.get("Revision Parent Policy", "N/A")))
         
         for idx, (key, value) in enumerate(fields):
             ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w").grid(row=idx, column=0, sticky="w", pady=2)
             ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w").grid(row=idx, column=1, sticky="w", pady=2)
         
         ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.title("Property View Test")
+    root.geometry("800x600")
+    pv = PropertyView(root)
+    pv.pack(fill="both", expand=True)
+    root.mainloop()
