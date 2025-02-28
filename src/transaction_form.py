@@ -73,8 +73,9 @@ class TransactionForm(ttk.Frame):
 
     def render_property_details(self):
         """Render fields for Property Address and Policy Date.
-        Using tk.Text for single-line inputs but binding Tab for focus traversal."""
-        fields = ["Street", "City", "State", "Zip", "Policy Date (MM/DD/YYYY)"]
+        Using tk.Text for single-line inputs and binding Tab for focus traversal."""
+        # Added "Policy Number" as a required field.
+        fields = ["Street", "City", "State", "Zip", "Policy Date (MM/DD/YYYY)", "Policy Number"]
         optional_fields = ["Apt/Building (if applicable)"]
 
         self.entry_fields = {}
@@ -104,7 +105,7 @@ class TransactionForm(ttk.Frame):
                 text_area.insert("1.0", self.transaction_data[field])
             self.transaction_fields[field] = text_area
 
-        # Coverage Amount (placed at row 3) as a single-line input.
+        # Coverage Amount as a single-line input.
         ttk.Label(self.page_area, text="Coverage Amount:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
         entry = tk.Text(self.page_area, height=1, width=30)
         entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=10, pady=5)
@@ -121,16 +122,16 @@ class TransactionForm(ttk.Frame):
         def on_owners_policy_change():
             if self.owners_policy_var.get():
                 self.lenders_policy_var.set(False)
-                print("DEBUG: Owner's Policy checked, Lender's Policy unchecked.")
+                print("DEBUG: ✅ Owner's Policy checked, Lender's Policy unchecked.")
             else:
-                print("ℹ️ DEBUG: Owner's Policy unchecked.")
+                print("DEBUG: ℹ️ Owner's Policy unchecked.")
 
         def on_lenders_policy_change():
             if self.lenders_policy_var.get():
                 self.owners_policy_var.set(False)
-                print("DEBUG: Lender's Policy checked, Owner's Policy unchecked.")
+                print("DEBUG: ✅ Lender's Policy checked, Owner's Policy unchecked.")
             else:
-                print("ℹ️ DEBUG: Lender's Policy unchecked.")
+                print("DEBUG: ℹ️ Lender's Policy unchecked.")
 
         owners_policy_checkbox = ttk.Checkbutton(self.page_area, text="Owner's Policy", variable=self.owners_policy_var, command=on_owners_policy_change)
         owners_policy_checkbox.grid(row=4, column=0, sticky="w", padx=10, pady=5)
@@ -227,10 +228,7 @@ class TransactionForm(ttk.Frame):
                     widget.config(bg="lightcoral")
         elif page_title == "Transaction Details":
             for field, widget in self.transaction_fields.items():
-                if widget.winfo_class() == "Text":
-                    value = widget.get("1.0", tk.END).strip()
-                else:
-                    value = widget.get().strip()
+                value = widget.get("1.0", tk.END).strip() if widget.winfo_class() == "Text" else widget.get().strip()
                 if not value:
                     missing_fields.append(field)
                     widget.config(bg="lightcoral")

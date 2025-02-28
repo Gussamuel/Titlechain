@@ -12,6 +12,7 @@ class PropertyView(ttk.Frame):
         self.columns = [
             "Property Address", 
             "Policy Date",
+            "Policy Number",         # New column for Policy Number
             "Vested Parties",
             "Underwriters", 
             "Coverage Amount", 
@@ -81,15 +82,15 @@ class PropertyView(ttk.Frame):
         self.tree.insert("", tk.END, values=["No data available"] + [""] * (len(self.columns) - 1))
 
     def reset_search(self):
-        # Clear the search field then refresh the view.
         self.search_var.set("")
         print("DEBUG: ✅ Search reset.")
+        self.refresh_view()
 
     def refresh_view(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
 
-        print("DEBUG: Attempting to fetch properties from blockchain...")
+        print("DEBUG: ✅ Attempting to fetch properties from blockchain...")
         self.data = fetch_properties()
         if not self.data:
             print("DEBUG: ❌ Could not fetch properties from blockchain. Loading from properties.json...")
@@ -99,6 +100,12 @@ class PropertyView(ttk.Frame):
                 else:
                     base_dir = os.path.dirname(__file__)
                 properties_file = os.path.join(base_dir, "properties.json")
+                # Create properties.json if it doesn't exist.
+                if not os.path.exists(properties_file):
+                    print("DEBUG: ❌ properties.json not found. Creating new file.")
+                    with open(properties_file, "w") as f:
+                        json.dump([], f)
+                    print("DEBUG: ✅ properties.json created successfully.")
                 with open(properties_file, "r") as f:
                     self.data = json.load(f)
                 print("DEBUG: ✅ Loaded properties from properties.json.")
@@ -113,6 +120,7 @@ class PropertyView(ttk.Frame):
             self.tree.insert("", tk.END, values=(
                 prop.get("Property Address", ""),
                 prop.get("Policy Date", ""),
+                prop.get("Policy Number", ""),   # New field
                 prop.get("Vested Parties", ""),
                 prop.get("Underwriters", ""),
                 prop.get("Coverage Amount", ""),
@@ -139,6 +147,7 @@ class PropertyView(ttk.Frame):
             self.tree.insert("", tk.END, values=(
                 prop.get("Property Address", ""),
                 prop.get("Policy Date", ""),
+                prop.get("Policy Number", ""),   # New field
                 prop.get("Vested Parties", ""),
                 prop.get("Underwriters", ""),
                 prop.get("Coverage Amount", ""),
@@ -150,13 +159,11 @@ class PropertyView(ttk.Frame):
                 prop.get("Revision", "")
             ))
         print("DEBUG: Searching for '", query, "'")
-    
+        
     def on_double_click(self, event):
-        # Get the row that was double-clicked.
         rowid = self.tree.identify_row(event.y)
         if not rowid:
             return
-        # Use the tree index instead of directly converting rowid.
         idx = self.tree.index(rowid)
         try:
             prop = self.data[idx]
@@ -164,7 +171,7 @@ class PropertyView(ttk.Frame):
             print("DEBUG: ❌ Double-click index out of range.")
             return
         self.show_property_details(prop)
-        print("DEBUG: ✅ Displaying transaction details.")
+        print("DEBUG: ✅ Displaying property details.")
     
     def show_property_details(self, prop):
         details_win = tk.Toplevel(self)
@@ -175,6 +182,7 @@ class PropertyView(ttk.Frame):
         fields = [
             ("Property Address", prop.get("Property Address", "N/A")),
             ("Policy Date", prop.get("Policy Date", "N/A")),
+            ("Policy Number", prop.get("Policy Number", "N/A")),  # New field
             ("Vested Parties", prop.get("Vested Parties", "N/A")),
             ("Underwriters", prop.get("Underwriters", "N/A")),
             ("Coverage Amount", prop.get("Coverage Amount", "N/A")),

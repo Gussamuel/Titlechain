@@ -69,6 +69,7 @@ class TransactionManager(ttk.Frame):
             "Select",
             "Property Address", 
             "Policy Date",
+            "Policy Number",              # New column for Policy Number
             "Vested Parties",
             "Underwriters", 
             "Coverage Amount",
@@ -144,11 +145,9 @@ class TransactionManager(ttk.Frame):
                 self.update_transactions()
     
     def on_double_click(self, event):
-        # Get the row that was double-clicked.
         rowid = self.tree.identify_row(event.y)
         if not rowid:
             return
-        # Use the tree index.
         idx = self.tree.index(rowid)
         try:
             transaction = self.pending_transactions[idx]
@@ -167,6 +166,7 @@ class TransactionManager(ttk.Frame):
         fields = [
             ("Property Address", transaction.get("Property Address", "N/A")),
             ("Policy Date", transaction.get("Policy Date", "N/A")),
+            ("Policy Number", transaction.get("Policy Number", "N/A")),  # New field
             ("Vested Parties", transaction.get("Vested Parties", "N/A")),
             ("Underwriters", transaction.get("Underwriters", "N/A")),
             ("Coverage Amount", transaction.get("Coverage Amount", "N/A")),
@@ -202,6 +202,8 @@ class TransactionManager(ttk.Frame):
         transaction["Property Address"] = ", ".join([part for part in address_parts if part])
         
         transaction["Policy Date"] = transaction.get("Policy Date (MM/DD/YYYY)", "").strip()
+        # Capture new "Policy Number" field.
+        transaction["Policy Number"] = transaction.get("Policy Number", "").strip()
         transaction["Legal Description/Derivation Clause"] = transaction.get("Legal Description", "").strip()
         
         spe = transaction.get("Standard Policy Exceptions", "")
@@ -237,10 +239,11 @@ class TransactionManager(ttk.Frame):
             seconds = total_seconds % 60
             remaining_str = f"{minutes:02d}:{seconds:02d}"
             select_display = "[X]" if transaction.get("selected", False) else "[ ]"
-            self.tree.insert("", "end", iid=idx, values=(
+            self.tree.insert("", "end", iid=idx, values=( 
                 select_display,
                 transaction.get("Property Address", "N/A"),
                 transaction.get("Policy Date", "N/A"),
+                transaction.get("Policy Number", "N/A"),   # New column
                 transaction.get("Vested Parties", "N/A"),
                 transaction.get("Underwriters", "N/A"),
                 transaction.get("Coverage Amount", "N/A"),
@@ -259,7 +262,6 @@ class TransactionManager(ttk.Frame):
     def save_transactions_to_file(self):
         data_to_save = []
         for transaction in self.pending_transactions:
-            # Only save transactions that haven't been processed.
             if transaction.get("processed", False):
                 continue
             t = transaction.copy()
@@ -276,9 +278,7 @@ class TransactionManager(ttk.Frame):
     def remove_expired_transactions(self):
         now = datetime.now()
         remaining = []
-        # Using 1 minute for testing; change to 15 minutes for production.
         for transaction in self.pending_transactions:
-            # If already processed, skip it.
             if transaction.get("processed", False):
                 continue
             if now - transaction['timestamp'] >= timedelta(minutes=1):
@@ -288,7 +288,6 @@ class TransactionManager(ttk.Frame):
                 except Exception as e:
                     print("DEBUG: ❌ Error submitting to blockchain:", e)
                     self.save_transaction_to_properties(transaction)
-                # Mark as processed so it won't be handled again.
                 transaction["processed"] = True
             else:
                 remaining.append(transaction)
@@ -299,7 +298,6 @@ class TransactionManager(ttk.Frame):
         self.after(1000, self.remove_expired_transactions)
     
     def submit_to_blockchain(self, transaction):
-        # Dummy simulation: always fail to simulate connection error.
         raise Exception("Simulated blockchain connection failure")
     
     def save_transaction_to_properties(self, transaction):
@@ -308,16 +306,20 @@ class TransactionManager(ttk.Frame):
         else:
             base_dir = os.path.dirname(__file__)
         properties_file = os.path.join(base_dir, "properties.json")
-        if os.path.exists(properties_file):
+        if not os.path.exists(properties_file):
+            print("DEBUG: ❌ properties.json not found. Creating new file.")
             try:
-                with open(properties_file, "r") as f:
-                    properties = json.load(f)
-                print("DEBUG: ✅ Loaded properties.json.")
+                with open(properties_file, "w") as f:
+                    json.dump([], f)
+                print("DEBUG: ✅ properties.json created successfully.")
             except Exception as e:
-                print("DEBUG: ❌ Error loading properties.json:", e)
-                properties = []
-        else:
-            print("DEBUG: ❌ properties.json not found. It will be created now.")
+                print("DEBUG: ❌ Could not create properties.json:", e)
+        try:
+            with open(properties_file, "r") as f:
+                properties = json.load(f)
+            print("DEBUG: ✅ Loaded properties.json.")
+        except Exception as e:
+            print("DEBUG: ❌ Error loading properties.json:", e)
             properties = []
         properties.append(transaction)
         try:
