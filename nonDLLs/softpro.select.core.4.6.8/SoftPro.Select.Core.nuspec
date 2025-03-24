@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/01/nuspec.xsd">
+  <metadata minClientVersion="2.5">
+    <id>SoftPro.Select.Core</id>
+    <version>4.6.8</version>
+    <authors>SoftPro</authors>
+    <owners>SoftPro</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The core software development kit that is required to create SoftPro Select packages and command-line applications.</description>
+    <releaseNotes>Initial release.</releaseNotes>
+    <copyright>Copyright ©2019, SoftPro</copyright>
+    <tags>SoftPro Select Core Software Development Kit</tags>
+  </metadata>
+</package>

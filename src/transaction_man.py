@@ -4,32 +4,30 @@ from datetime import datetime, timedelta
 import os
 import sys
 import json
-
 # ❌✅
 
 class TransactionManager(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         
-        # Determine the base directory.
-        if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            base_dir = os.path.dirname(os.path.dirname(sys.executable))
         else:
-            base_dir = os.path.dirname(__file__)
-        self.pending_file = os.path.join(base_dir, "pending_transactions.json")
-        
-        # Check if pending_transactions.json exists; if not, create it.
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # Set the pending transactions file inside the "data" folder.
+        self.pending_file = os.path.join(base_dir, "data", "pending_transactions.json")
         if not os.path.exists(self.pending_file):
-            print("DEBUG: ❌ pending_transactions.json not found. Creating new file.")
+            print(f"DEBUG: ❌ pending_transactions.json not found at {self.pending_file}. Creating new file.")
             try:
                 with open(self.pending_file, "w") as f:
                     json.dump([], f)
-                print("DEBUG: ✅ pending_transactions.json created successfully.")
+                print(f"DEBUG: ✅ pending_transactions.json created successfully at {self.pending_file}.")
             except Exception as e:
                 print("DEBUG: ❌ Could not create pending_transactions.json:", e)
         else:
-            print("DEBUG: ✅ pending_transactions.json found.")
-        
+            print(f"DEBUG: ✅ pending_transactions.json found at {self.pending_file}.")
+
         # Load pending transactions from file.
         try:
             with open(self.pending_file, "r") as f:
@@ -295,16 +293,17 @@ class TransactionManager(ttk.Frame):
     
     def save_transaction_to_properties(self, transaction):
         if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
+            base_dir = os.path.dirname(os.path.dirname(sys.executable))
         else:
-            base_dir = os.path.dirname(__file__)
-        properties_file = os.path.join(base_dir, "properties.json")
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        properties_file = os.path.join(base_dir, "data", "properties.json")
         if not os.path.exists(properties_file):
-            print("DEBUG: ❌ properties.json not found. Creating new file.")
+            print(f"DEBUG: ❌ properties.json not found. Creating new file at {properties_file}.")
             try:
                 with open(properties_file, "w") as f:
                     json.dump([], f)
-                print("DEBUG: ✅ properties.json created successfully.")
+                print(f"DEBUG: ✅ properties.json created successfully at {properties_file}.")
             except Exception as e:
                 print("DEBUG: ❌ Could not create properties.json:", e)
         try:

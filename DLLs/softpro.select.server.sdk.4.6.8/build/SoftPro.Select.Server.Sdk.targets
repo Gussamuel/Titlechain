@@ -1,0 +1,107 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="MakeSelectPackage" AssemblyFile=".\SoftPro.Select.Sdk.Tasks.dll"/>
+
+  <!-- ==================================================================== -->
+  <!-- BuildDependsOn                                                       -->
+  <!-- ==================================================================== -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      $(BuildDependsOn);
+      BuildSelectServerPackage;
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <!-- ==================================================================== -->
+  <!-- CleanDependsOn                                                       -->
+  <!-- ==================================================================== -->
+  <PropertyGroup>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      CleanSelectArtifacts;
+    </CleanDependsOn>
+  </PropertyGroup>
+
+  <!-- ==================================================================== -->
+  <!-- CleanSelectArtifacts                                                 -->
+  <!-- ==================================================================== -->
+  <Target Name="CleanSelectArtifacts">
+    <Message Text="Cleaning SoftPro Select files in $(OutDir)" Importance="high" />
+    <ItemGroup>
+      <FilesToDelete Include="$(OutDir)*.spspkg"/>
+    </ItemGroup>
+    <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- MakeSelectPackage                                              -->
+  <!-- ==================================================================== -->
+  <Target Name="BuildSelectServerPackage">
+    <CreateItem Include="$(OutDir)$(TargetFileName).config"
+                Condition="Exists('$(OutDir)$(TargetFileName).config')"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(IntermediateAssembly)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(AddModules)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'@(AddModules)' != ''">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="$(IntermediateOutputPath)$(_SGenDllName)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'$(_SGenDllCreated)'=='true'">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(_DebugSymbolsIntermediatePath)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'$(_DebugSymbolsProduced)'=='true' and '$(SkipCopyingSymbolsToOutputDirectory)' != 'true' and '$(CopyOutputSymbolsToOutputDirectory)'=='true'">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(ReferenceComWrappersToCopyLocal); @(ResolvedIsolatedComModules); @(_DeploymentLooseManifestFile); @(NativeReferenceFile)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'@(ReferenceComWrappersToCopyLocal)' != '' or '@(ResolvedIsolatedComModules)' != '' or '@(_DeploymentLooseManifestFile)' != '' or '@(NativeReferenceFile)' != ''">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(ReferenceCopyLocalPaths)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(AllItemsFullPathWithTargetPath)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectServerPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <Message Importance="high" Text="%(SelectServerPackageContent.FullPath)" />
+
+    <MakeSelectPackage
+      Files="@(SelectServerPackageContent)"
+      ExcludeFiles="$(ExcludeFiles)"
+      PackageKind ="$(SelectPackageKind)"
+      References="@(_ResolveAssemblyReferenceResolvedFiles)"
+      AssemblyName="$(AssemblyName)"
+      StartProgram="$(StartProgram)"
+      Output="$(MSBuildProjectDirectory)\$(OutDir)$(AssemblyName).spspkg">
+      <Output TaskParameter="Output" ItemName="FileWrites" />
+      <Output TaskParameter="Output" ItemName="SelectPackageOutput" />
+    </MakeSelectPackage>
+
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- GetSelectPackageOutputPath																						-->
+  <!-- ==================================================================== -->
+  <Target Name="GetSelectPackageOutputPath" Returns="$(ProjectDir)$(OutputPath)" />
+  
+
+</Project>

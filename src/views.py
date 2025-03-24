@@ -25,23 +25,25 @@ class PropertyView(ttk.Frame):
         ]
 
         self.data = []  # Store the properties data locally for filtering
-
-        # Ensure properties.json exists on startup.
-        if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
+        # Determine the base directory.
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            # Running as a PyInstaller bundle – assume the EXE is in TitleChain\dist,
+            # so go up one level to TitleChain, then into the data folder.
+            base_dir = os.path.dirname(os.path.dirname(sys.executable))
         else:
-            base_dir = os.path.dirname(__file__)
-        properties_file = os.path.join(base_dir, "properties.json")
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        properties_file = os.path.join(base_dir, "data", "properties.json")
         if not os.path.exists(properties_file):
-            print("DEBUG: ❌ properties.json not found on startup. Creating new file.")
+            print(f"DEBUG: ❌ properties.json not found on startup at {properties_file}. Creating new file.")
             try:
                 with open(properties_file, "w") as f:
                     json.dump([], f)
-                print("DEBUG: ✅ properties.json created successfully on startup.")
+                print(f"DEBUG: ✅ properties.json created successfully on startup at {properties_file}.")
             except Exception as e:
                 print("DEBUG: ❌ Could not create properties.json on startup:", e)
         else:
-            print("DEBUG: ✅ properties.json found on startup.")
+            print(f"DEBUG: ✅ properties.json found on startup at {properties_file}.")
 
         # Configure the grid to make widgets expand
         self.grid_rowconfigure(1, weight=1)
@@ -115,13 +117,13 @@ class PropertyView(ttk.Frame):
             print("DEBUG: ❌ Could not fetch properties from blockchain. Loading from properties.json...")
             try:
                 if getattr(sys, 'frozen', False):
-                    base_dir = os.path.dirname(sys.executable)
+                    base_dir = os.path.dirname(os.path.dirname(sys.executable))
                 else:
-                    base_dir = os.path.dirname(__file__)
-                properties_file = os.path.join(base_dir, "properties.json")
+                    base_dir = os.path.dirname(os.path.abspath(__file__))
+                properties_file = os.path.join(base_dir, "data", "properties.json")
                 with open(properties_file, "r") as f:
                     self.data = json.load(f)
-                print("DEBUG: ✅ Loaded properties from properties.json.")
+                print(f"DEBUG: ✅ Loaded properties from properties.json at {properties_file}.")
             except Exception as e:
                 print("DEBUG: ❌ Error loading properties from properties.json:", e)
                 self.data = []
@@ -219,6 +221,7 @@ class PropertyView(ttk.Frame):
         ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
 
 if __name__ == "__main__":
+    print("DEBUG: ❌✅❌✅❌✅VIEWS MAIN")
     root = tk.Tk()
     root.title("Property View Test")
     root.geometry("800x600")

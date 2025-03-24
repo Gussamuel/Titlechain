@@ -1,0 +1,134 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <UsingTask TaskName="FindSelectClient" AssemblyFile=".\SoftPro.Select.Sdk.Tasks.dll"/>
+  <UsingTask TaskName="MakeSelectPackage" AssemblyFile=".\SoftPro.Select.Sdk.Tasks.dll"/>
+
+  <!-- ==================================================================== -->
+  <!-- BuildDependsOn                                                       -->
+  <!-- ==================================================================== -->
+  <PropertyGroup>
+    <BuildDependsOn>
+      CompileCommandTable;
+      $(BuildDependsOn);
+      BuildSelectShellPackage;
+      SetupShell;
+    </BuildDependsOn>
+  </PropertyGroup>
+
+  <!-- ==================================================================== -->
+  <!-- CleanDependsOn                                                       -->
+  <!-- ==================================================================== -->
+  <PropertyGroup>
+    <CleanDependsOn>
+      $(CleanDependsOn);
+      CleanSelectArtifacts;
+    </CleanDependsOn>
+  </PropertyGroup>
+
+  <!-- ==================================================================== -->
+  <!-- CleanSelectArtifacts                                                 -->
+  <!-- ==================================================================== -->
+  <Target Name="CleanSelectArtifacts">
+    <Message Text="Cleaning SoftPro Select files in $(OutDir)" Importance="high" />
+    <ItemGroup>
+      <FilesToDelete Include="$(OutDir)*.spspkg"/>
+    </ItemGroup>
+    <Delete Files="@(FilesToDelete)" ContinueOnError="true" />
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- CompileCommandTable                                                  -->
+  <!-- ==================================================================== -->
+  <Target Name="CompileCommandTable" Condition="'@(CommandTable)' != ''">
+    <Exec Command="&quot;$(SPCtcTool)&quot; /src:&quot;%(CommandTable.Identity)&quot;" Outputs="%(CommandTable.Filename).cto">
+      <Output TaskParameter="Outputs" ItemName="EmbeddedResource" />
+    </Exec>
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- BuildSelectShellPackage                                             -->
+  <!-- ==================================================================== -->
+  <Target Name="BuildSelectShellPackage">
+    <CreateItem Include="$(OutDir)$(TargetFileName).config"
+                Condition="Exists('$(OutDir)$(TargetFileName).config')"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(IntermediateAssembly)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(AddModules)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'@(AddModules)' != ''">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="$(IntermediateOutputPath)$(_SGenDllName)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'$(_SGenDllCreated)'=='true'">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(_DebugSymbolsIntermediatePath)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'$(_DebugSymbolsProduced)'=='true' and '$(SkipCopyingSymbolsToOutputDirectory)' != 'true' and '$(CopyOutputSymbolsToOutputDirectory)'=='true'">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(ReferenceComWrappersToCopyLocal); @(ResolvedIsolatedComModules); @(_DeploymentLooseManifestFile); @(NativeReferenceFile)"
+                AdditionalMetadata="PartUri=\"
+                Condition="'@(ReferenceComWrappersToCopyLocal)' != '' or '@(ResolvedIsolatedComModules)' != '' or '@(_DeploymentLooseManifestFile)' != '' or '@(NativeReferenceFile)' != ''">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(ReferenceCopyLocalPaths)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <CreateItem Include="@(AllItemsFullPathWithTargetPath)"
+                AdditionalMetadata="PartUri=\">
+      <Output ItemName="SelectShellPackageContent" TaskParameter="Include" />
+    </CreateItem>
+
+    <Message Importance="high" Text="%(SelectShellPackageContent.FullPath)" />
+
+    <MakeSelectPackage
+      Files="@(SelectShellPackageContent)"
+      ExcludeFiles="$(ExcludeFiles)"
+      PackageKind ="$(SelectPackageKind)"
+      AssemblyName="$(AssemblyName)"
+      StartProgram="$(StartProgram)"
+      References="@(_ResolveAssemblyReferenceResolvedFiles)"
+      Output="$(MSBuildProjectDirectory)\$(OutDir)$(AssemblyName).spspkg">
+      <Output TaskParameter="Output" ItemName="FileWrites" />
+      <Output TaskParameter="Output" ItemName="SelectPackageOutput" />
+    </MakeSelectPackage>
+
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- FindSelectClient                                                        -->
+  <!-- ==================================================================== -->
+  <Target Name="FindSelectClient">
+    <FindSelectClient>
+      <Output TaskParameter="InstallDir" PropertyName="SelectClientInstallDir" />
+    </FindSelectClient>
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- SetupShell																												  -->
+  <!-- ==================================================================== -->
+  <Target Name="SetupShell" DependsOnTargets="FindSelectClient" Condition="'$(BuildingInsideVisualStudio)' == 'true'">
+    <Exec Command="&quot;$(SelectClientInstallDir)Select.exe&quot; /setup /rootsuffix:Exp" />
+  </Target>
+
+  <!-- ==================================================================== -->
+  <!-- GetSelectPackageOutputPath																									-->
+  <!-- ==================================================================== -->
+  <Target Name="GetSelectPackageOutputPath" Returns="$(ProjectDir)$(OutputPath)" />
+
+</Project>

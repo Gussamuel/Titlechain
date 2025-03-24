@@ -14,7 +14,7 @@ else:
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the JSON file path relative to the base directory
-json_path = os.path.join(base_dir, "stateTitle.json")
+json_path = os.path.join(base_dir, "data", "stateTitle.json")
 
 # Load the JSON data
 try:

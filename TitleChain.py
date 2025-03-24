@@ -7,48 +7,138 @@ from tkinter import messagebox
 from tkinter import ttk
 from ttkbootstrap import Style
 from ttkbootstrap.widgets import Button
-from src.blockchain_tab import BlockchainTab
-from src.title_search import TitleTab
-# Note: Do not instantiate TransactionManager here – it is created inside BlockchainTab.
+from src.login import LoginGUI
 
-sdk_path = os.path.abspath(os.path.dirname(__file__))
-if sdk_path not in sys.path:
-    sys.path.append(sdk_path)
-
-required_dlls = [
-    "SoftPro.Select.Client.dll",
-    "SoftPro.Documents.Client.dll",
-    "SoftPro.Accounting.Client.dll"
+# 1) Define all subdirectories under TitleChain where DLLs might live.
+#    These paths are relative to the TitleChain root folder (or sys._MEIPASS when frozen).
+DLL_SUBDIRS = [
+    r"DLLs\softpro.select.controls.sdk.4.5.5\lib\net46",
+    r"DLLs\softpro.select.core.sdk.4.5.5\lib\net46",
+    r"DLLs\softpro.select.plugin.sdk.4.6.8\build",
+    r"DLLs\softpro.select.server.sdk.4.6.8\build",
+    r"DLLs\softpro.select.shell.sdk.4.6.8\build",
+    r"nonDLLs\softpro.select.controls.4.6.8\lib\net46",
+    r"nonDLLs\softpro.select.core.4.6.8\lib\net46",
+    r"nonDLLs\softpro.select.plugin.4.5.5\build",
+    r"nonDLLs\softpro.select.server.core.4.6.8\lib\net46",
+    r"nonDLLs\softpro.select.shell.core.4.6.8\lib\net46",
 ]
-missing_dlls = [dll for dll in required_dlls if not os.path.exists(os.path.join(sdk_path, dll))]
-if missing_dlls:
-    raise FileNotFoundError(f"DEBUG: ❌ Missing DLLs in {sdk_path}: {missing_dlls}")
 
-print("DEBUG: ✅ All required DLLs are present in the TitleChain root folder!")
+# 2) List of required DLL filenames.
+REQUIRED_DLLS = [
+    "SoftPro.OrderTracking.Controls.dll",
+    "SoftPro.OrderTracking.SnapSections.dll",
+    "SoftPro.Select.Controls.dll",
+    "SoftPro.Accounting.Client.dll",
+    "SoftPro.ClientModel.dll",
+    "SoftPro.Documents.Client.dll",
+    "SoftPro.EntityModel.dll",
+    "SoftPro.Imaging.Client.dll",
+    "SoftPro.OrderTracking.Client.dll",
+    "SoftPro.ProceedsTracking.Client.dll",
+    "SoftPro.Register.Client.dll",
+    "SoftPro.Reporting.Client.dll",
+    "SoftPro.Select.Client.dll",
+    "Mono.Cecil.dll",
+    "Mono.Cecil.Mdb.dll",
+    "Mono.Cecil.Pdb.dll",
+    "Mono.Cecil.Rocks.dll",
+    "Newtonsoft.Json.dll",
+    "NuGet.Common.dll",
+    "NuGet.Configuration.dll",
+    "NuGet.Frameworks.dll",
+    "NuGet.Packaging.Core.dll",
+    "NuGet.Packaging.dll",
+    "NuGet.Versioning.dll",
+    "SoftPro.Select.Sdk.Tasks.dll",
+    "SoftPro.Accounting.Controls.dll",
+    "SoftPro.OrderTracking.Controls.dll",
+    "SoftPro.OrderTracking.SnapSections.dll",
+    "SoftPro.Select.OrderTracking.Shared.dll",
+    "SoftPro.PersistenceModel.dll",
+    "SoftPro.Select.Service.dll",
+    "SoftPro.ServerModel.dll",
+    "SoftPro.Select.Shell.dll"
+]
 
+# 3) Determine the base directory.
+if getattr(sys, 'frozen', False):
+    # When frozen (using PyInstaller), sys._MEIPASS holds the temp folder.
+    base_dir = sys._MEIPASS
+else:
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+
+if base_dir not in sys.path:
+    sys.path.append(base_dir)
+
+# 4) Search for each required DLL in the subdirectories (relative to base_dir).
+dll_candidates = {dll: [] for dll in REQUIRED_DLLS}
+
+for subdir in DLL_SUBDIRS:
+    full_subdir = os.path.join(base_dir, subdir)
+    if not os.path.isdir(full_subdir):
+        print(f"DEBUG: ❌ Directory does not exist: {full_subdir}")
+        continue
+    for dll in REQUIRED_DLLS:
+        candidate_path = os.path.join(full_subdir, dll)
+        if os.path.exists(candidate_path):
+            dll_candidates[dll].append(candidate_path)
+
+# Also check in the base directory itself.
+for dll in REQUIRED_DLLS:
+    candidate_path = os.path.join(base_dir, dll)
+    if os.path.exists(candidate_path):
+        dll_candidates[dll].append(candidate_path)
+
+# 5) Verify that each required DLL was found at least once.
+missing = [dll for dll in REQUIRED_DLLS if not dll_candidates[dll]]
+if missing:
+    raise FileNotFoundError(f"DEBUG: ❌ Missing DLLs in specified subdirectories and base: {missing}")
+
+print("DEBUG: ✅ All required DLLs were located in the specified directories or base directory!")
+
+# 6) Initialize pythonnet and load the DLL references.
 pythonnet.load("coreclr")
 
-try:
-    clr.AddReference(os.path.join(sdk_path, "SoftPro.Select.Client.dll"))
-    clr.AddReference(os.path.join(sdk_path, "SoftPro.Documents.Client.dll"))
-    clr.AddReference(os.path.join(sdk_path, "SoftPro.Accounting.Client.dll"))
-    print("DEBUG: ✅ SoftPro DLLs loaded successfully!")
-except Exception as e:
-    print(f"DEBUG: ❌ Error loading SoftPro DLLs: {e}")
+for dll in REQUIRED_DLLS:
+    # Load the first found instance for each DLL.
+    dll_path = dll_candidates[dll][0]
+    try:
+        clr.AddReference(dll_path)
+        print(f"DEBUG: ✅ {dll} loaded from: {dll_path}")
+    except Exception as e:
+        print(f"DEBUG: ❌ Error loading {dll_path}: {e}")
 
-class TitleChainApp(tk.Tk):
-    def __init__(self):
-        super().__init__()
 
+# 7) Test whether we can actually import and instantiate something from SoftPro.Select.Client
+# try:
+#     from SoftPro.Select.Client import SelectClient
+#     select_client = SelectClient()
+#     print("DEBUG: ✅ SelectClient instance created successfully:", select_client)
+# except ImportError as e:
+#     print("DEBUG: ❌ Failed to import SoftPro.Select.Client.SelectClient:", e)
+# except Exception as e:
+#     print("DEBUG: ❌ Failed to create SelectClient instance:", e)
+
+def center_window(win, width, height):
+    win.update_idletasks()  # Ensure win.winfo_screenwidth() is accurate
+    screen_width = win.winfo_screenwidth()
+    screen_height = win.winfo_screenheight()
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+    win.geometry(f"{width}x{height}+{x}+{y}")
+
+class TitleChainApp(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
         self.title("TitleChain")
-        self.geometry("1200x1000")
-
-        # Apply ttkbootstrap theme
+        desired_width = 1440
+        desired_height = 900
+        center_window(self, desired_width, desired_height)
+        self.resizable(False, False)
         self.style = Style(theme="flatly")
-
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
         # Create the main Notebook
         self.notebook = ttk.Notebook(self)
         self.notebook.grid(row=0, column=0, sticky="nsew")
@@ -58,7 +148,7 @@ class TitleChainApp(tk.Tk):
         self.notebook.add(self.home_tab, text="🏠 Home")
         self.setup_home_tab()
 
-        # Blockchain tab – this tab instantiates TransactionManager, TransactionForm, and PropertyView.
+        # Blockchain tab – instantiate TransactionManager, TransactionForm, PropertyView.
         from src.blockchain_tab import BlockchainTab
         self.blockchain_tab = BlockchainTab(self.notebook)
         self.notebook.add(self.blockchain_tab, text="🔗 Blockchain")
@@ -109,14 +199,43 @@ class TitleChainApp(tk.Tk):
         response = messagebox.askyesno("Exit", "Are you sure you want to quit?")
         if response:
             self.destroy()
+            sys.exit()
 
 if __name__ == "__main__":
-    app = TitleChainApp()
-    app.mainloop()
+    # Launch the login UI first.
+    print("DEBUG: ❌✅❌✅❌✅ TITLECHAIN.PY MAIN")
+    login_app = LoginGUI()
+    login_app.mainloop()
 
+# Now, i need to make a change to the "revision" portion of the code. specifically, there needs to be an input field below the revision checkbox that is greyed out and nonusable UNLESS the revision checkbox is clicked. once its clicked, the input becomes available. the user CANT submit unless the input box has been filed out. that means the validation needs to be considered as well as the double click feature that displays transaction information. i do NOT want this to be a column, but when the user clicks on the transaction to check the details, the revision note should be there if there is a revision note. lastly, the user needs to be required to pick from a list of transactions from the property view list to "tie" the revision to. the user CANT submit until picking the transaction that the revision is tied to. to prevent mistakes, the policy number from the transaction in the property list MUST match the policy number of their current transaction submission. if it doesn't, they should be required to change the policy number OR pick a new transaction that matches the policy number they have entered. after that, the revised transaction needs to be "paired" with the previous transaction, im not sure how to display this but maybe you can give me some ideas. does this make sense?
+# Add debug statements for when the pending_transactions and properties json files get deleted WHILE titlechain is running
+# Add short term memory for if pending_transactions gets deleted while titlechain is running, constantly store data, if pending is deleted, recreate it, repopulate it with data. data gets deleted on restart
+# Login page so that transactions can be submitted with a name
+# refresh blockchain on submission, refresh on restart.
+# Fix the compile command so it can simply be "pyinstaller --onefile --add-data "DLLs;DLLs" --add-data "nonDLLs;nonDLLs" --add-data "data;data" Titlechain.py
+# Access DLL files from their respective locations
 
-#Now, i need to make a change to the "revision" portion of the code. specifically, there needs to be an input field below the revision checkbox that is greyed out and nonusable UNLESS the revision checkbox is clicked. once its clicked, the input becomes available. the user CANT submit unless the input box has been filed out. that means the validation needs to be considered as well as the double click feature that displays transaction information. i do NOT want this to be a column, but when the user clicks on the transaction to check the details, the revision note should be there if there is a revision note. lastly, the user needs to be required to pick from a list of transactions from the property view list to "tie" the revision to. the user CANT submit until picking the transaction that the revision is tied to. to prevent mistakes, the policy number from the transaction in the property list MUST match the policy number of their current transaction submission. if it doesn't, they should be required to change the policy number OR pick a new transaction that matches the policy number they have entered. after that, the revised transaction needs to be "paired" with the previous transaction, im not sure how to display this but maybe you can give me some ideas. does this make sense?
-#Add debug statements for when the pending_transactions and properties json files get deleted WHILE titlechain is running
-#Add short term memory for if pending_transactions gets deleted while titlechain is running, constantly store data, if pending is deleted, recreate it, repopulate it with data. data gets deleted on restart
-#Login page so that transactions can be submitted with a name
-#refresh blockchain on submission, refresh on restart.
+# 1. Create a login GUI where the person can register to be a user (first name, last name, email, assign them a user number that's unique to them), but only certain users have the ability to CREATE databases if there isn't already a TitleChainDb in existence.There will be a list of users somewhere with certain permissions (this list should be stored in the "data" folder which will eventually be made private unless its for application use)
+
+# 2. Create GUI for database connection. If the user cancels, titlechain closes. If not and the database doesn't exist, it will ask the user to create a new TitleChainDb (the user MUST have the permissions to do so, and if not, the program closes) and the columns will be
+
+#             "Property Address", 
+#             "Policy Date",
+#             "Policy Number",  
+#             "Vested Parties",
+#             "Underwriters", 
+#             "Coverage Amount",
+#             "Owner's Policy",
+#             "Lender's Policy",
+#             "Standard Policy Exceptions", 
+#             "Property Specific Exceptions", 
+#             "Legal Description/Derivation Clause",
+#             "Revision",
+
+# 3. Once the titlechaindb exists, it will only ask the user to connect to a database on startup as opposed to creating one. the titlechaindb should be the only option because it was created by titlechain.
+
+# 4. lastly we need to boot titlechain at the same time that softpro launches, which can be solved if we have titlechain launch on startup every time.
+#
+# 5. Clean up the UI, make buttons look nice, make sure window sizes are right, make sure style are right
+#
+# 6. 
