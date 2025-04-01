@@ -266,6 +266,84 @@ class TransactionManager(ttk.Frame):
         except Exception as e:
             print("DEBUG: ❌ Error saving pending transactions:", e)
     
+    def submit_transaction_to_db(self, transaction):
+        """
+        Submits the given transaction to the TitleChainDb database using the persistent connection.
+        Debug statements are included to help diagnose any issues.
+        """
+        try:
+            from src.db_connection_global import connection as db_conn
+        except ImportError as e:
+            print("DEBUG: Failed to import persistent DB connection:", e)
+            raise Exception("Persistent DB connection not available.")
+
+        if db_conn is None:
+            print("DEBUG: No persistent DB connection available!")
+            raise Exception("No DB connection available.")
+
+        from datetime import datetime
+        try:
+            cursor = db_conn.cursor()
+            insert_sql = """
+                INSERT INTO Orders 
+                    (property_address, policy_date, policy_number, vested_parties, underwriters, coverage_amount,
+                     owners_policy, lenders_policy, standard_policy_exceptions, property_specific_exceptions, legal_description, revision)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            # Convert Revision: if it's not a valid int, default to 1.
+            revision_raw = transaction.get("Revision", 1)
+            try:
+                revision_value = int(revision_raw)
+            except Exception:
+                revision_value = 1 if str(revision_raw).lower() == "yes" else 0
+
+            # Convert Policy Date from string to a date object.
+            policy_date_str = transaction.get("Policy Date")
+            try:
+                policy_date_value = datetime.strptime(policy_date_str, "%m/%d/%Y").date()
+            except Exception as e:
+                print("DEBUG: ❌ Failed to parse Policy Date:", policy_date_str, e)
+                policy_date_value = None
+
+            # Convert Coverage Amount to a numeric type (float).
+            coverage_raw = transaction.get("Coverage Amount")
+            try:
+                import re
+                # Remove any characters except digits and period.
+                coverage_clean = re.sub(r'[^\d\.]', '', coverage_raw)
+                coverage_amount = float(coverage_clean)
+            except Exception as e:
+                print("DEBUG: ❌ Failed to convert Coverage Amount:", coverage_raw, e)
+                coverage_amount = None
+
+            # Normalize Property Address: replace "Tennessee" (any case) with "TN"
+            # I'm not sure if I actually have to go through and do manual error handling on this or not :(
+            property_address = transaction.get("Property Address")
+            if property_address:
+                property_address = property_address.replace("Tennessee", "TN").replace("tennessee", "TN")
+            
+            values = (
+                property_address,
+                policy_date_value,
+                transaction.get("Policy Number"),
+                transaction.get("Vested Parties"),
+                transaction.get("Underwriters"),
+                coverage_amount,
+                transaction.get("Owner's Policy"),
+                transaction.get("Lender's Policy"),
+                transaction.get("Standard Policy Exceptions"),
+                transaction.get("Property Specific Exceptions"),
+                transaction.get("Legal Description/Derivation Clause"),
+                revision_value
+            )
+            print("DEBUG: Inserting transaction with values:", values)
+            cursor.execute(insert_sql, values)
+            db_conn.commit()
+            print("DEBUG: Transaction submitted to database successfully.")
+        except Exception as e:
+            print("DEBUG: Exception while submitting transaction to DB:", e)
+            raise
+    
     def remove_expired_transactions(self):
         now = datetime.now()
         remaining = []
@@ -274,10 +352,11 @@ class TransactionManager(ttk.Frame):
                 continue
             if now - transaction['timestamp'] >= timedelta(minutes=1):
                 try:
-                    self.submit_to_blockchain(transaction)
-                    print("DEBUG: ✅ Transaction submitted to blockchain.")
+                    #self.submit_to_blockchain(transaction)
+                    self.submit_transaction_to_db(transaction)
+                    print("DEBUG: ✅ Transaction submitted to TitleChainDb.")
                 except Exception as e:
-                    print("DEBUG: ❌ Error submitting to blockchain:", e)
+                    print("DEBUG: ❌ Error submitting to TitleChainDb:", e)
                     self.save_transaction_to_properties(transaction)
                 transaction["processed"] = True
             else:

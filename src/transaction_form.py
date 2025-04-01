@@ -75,7 +75,7 @@ class TransactionForm(ttk.Frame):
         """Render fields for Property Address and Policy Date.
         Using tk.Text for single-line inputs and binding Tab for focus traversal."""
         # Added "Policy Number" as a required field.
-        fields = ["Street", "City", "State", "Zip", "Policy Date (MM/DD/YYYY)", "Policy Number"]
+        fields = ["Street", "City", "State (ST)", "Zip", "Policy Date (MM/DD/YYYY)", "Policy Number"]
         optional_fields = ["Apt/Building (if applicable)"]
 
         self.entry_fields = {}
@@ -106,7 +106,7 @@ class TransactionForm(ttk.Frame):
             self.transaction_fields[field] = text_area
 
         # Coverage Amount as a single-line input.
-        ttk.Label(self.page_area, text="Coverage Amount:").grid(row=3, column=0, sticky="w", padx=10, pady=5)
+        ttk.Label(self.page_area, text="Coverage Amount (in 0.00):").grid(row=3, column=0, sticky="w", padx=10, pady=5)
         entry = tk.Text(self.page_area, height=1, width=30)
         entry.grid(row=3, column=1, columnspan=2, sticky="ew", padx=10, pady=5)
         entry.bind("<Tab>", lambda event: event.widget.tk_focusNext().focus() or "break")

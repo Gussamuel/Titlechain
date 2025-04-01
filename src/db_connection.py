@@ -5,6 +5,7 @@ import pyodbc
 import clr
 import pythonnet
 from ttkbootstrap import Style
+from src import db_connection_global
 
 # We need pythonnet for .NET interop
 pythonnet.load("coreclr")
@@ -174,6 +175,8 @@ class DBConnectionGUI(tk.Toplevel):
             messagebox.showinfo("Connected", f"Connected to {self.database_name} on {server}")
             # Update default server in user profile.
             self.update_default_server(server)
+            # Save connection
+            db_connection_global.connection = self.connection
             self.destroy()
             self.master.after(100, self.launch_main_ui)
         except Exception as e:

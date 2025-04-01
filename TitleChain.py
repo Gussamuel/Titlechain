@@ -238,4 +238,16 @@ if __name__ == "__main__":
 #
 # 5. Clean up the UI, make buttons look nice, make sure window sizes are right, make sure style are right
 #
-# 6. 
+# 6. Fix formatting for transaction_from, specifically the data formatting and the entry of the data
+#
+# 7. Fix double click view within property view and transaction manager, specifically center viewing, no expanding, and all data can be viewed (test with more data in the vest parties section)
+# 
+# 8. Revision tag. if the revision box is checked, a note is required in order to process. Potentially the revision to another entry in the DB.
+#
+# 9. Dont allow multiple windows to open for ANYTHING, check every window event
+#
+# 10. Adjust debug to where teh fetched properties display more elegantly.
+#
+# 11. Populate DB with a bunch of properties.
+#
+# 12. Fix "Revisions" so they show yes's and no's.

@@ -5,6 +5,54 @@ import os
 import sys
 import json
 
+def fetch_properties_from_db():
+    """
+    Attempts to fetch properties from the TitleChainDb database.
+    Returns a list of property dictionaries on success, or None on failure.
+    Assumes that a persistent DB connection has been stored in db_connection_global.connection.
+    """
+    try:
+        from src.db_connection_global import connection as db_conn
+    except ImportError as e:
+        print("DEBUG: Failed to import persistent DB connection:", e)
+        return None
+
+    if db_conn is None:
+        print("DEBUG: No persistent DB connection available in fetch_properties_from_db.")
+        return None
+
+    try:
+        cursor = db_conn.cursor()
+        query = """
+            SELECT 
+                property_address AS "Property Address", 
+                policy_date AS "Policy Date", 
+                policy_number AS "Policy Number", 
+                vested_parties AS "Vested Parties", 
+                underwriters AS "Underwriters", 
+                coverage_amount AS "Coverage Amount", 
+                owners_policy AS "Owner's Policy", 
+                lenders_policy AS "Lender's Policy", 
+                standard_policy_exceptions AS "Standard Policy Exceptions", 
+                property_specific_exceptions AS "Property Specific Exceptions", 
+                legal_description AS "Legal Description/Derivation Clause", 
+                revision AS "Revision"
+            FROM Orders
+        """
+        print("DEBUG: Executing DB query to fetch properties.")
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        if not rows:
+            print("DEBUG: No properties found in DB.")
+            return []  # Returning empty list to indicate query succeeded but no entries were found.
+        columns = [column[0] for column in cursor.description]
+        properties = [dict(zip(columns, row)) for row in rows]
+        print("DEBUG: Fetched properties from DB:", properties)
+        return properties
+    except Exception as e:
+        print("DEBUG: Exception in fetch_properties_from_db:", e)
+        return None
+
 class PropertyView(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
@@ -95,7 +143,6 @@ class PropertyView(ttk.Frame):
         # Bind double-click to show property details.
         self.tree.bind("<Double-1>", self.on_double_click)
 
-
     def display_no_data_message(self):
         for row in self.tree.get_children():
             self.tree.delete(row)
@@ -111,31 +158,38 @@ class PropertyView(ttk.Frame):
         for row in self.tree.get_children():
             self.tree.delete(row)
 
+        # First, try to fetch properties from the blockchain.
         print("DEBUG: ✅ Attempting to fetch properties from blockchain...")
         self.data = fetch_properties()
         if not self.data:
-            print("DEBUG: ❌ Could not fetch properties from blockchain. Loading from properties.json...")
-            try:
-                if getattr(sys, 'frozen', False):
-                    base_dir = os.path.dirname(os.path.dirname(sys.executable))
-                else:
-                    base_dir = os.path.dirname(os.path.abspath(__file__))
-                properties_file = os.path.join(base_dir, "data", "properties.json")
-                with open(properties_file, "r") as f:
-                    self.data = json.load(f)
-                print(f"DEBUG: ✅ Loaded properties from properties.json at {properties_file}.")
-            except Exception as e:
-                print("DEBUG: ❌ Error loading properties from properties.json:", e)
-                self.data = []
+            print("DEBUG: ❌ Could not fetch properties from blockchain. Attempting to load from DB...")
+            # If blockchain fetch fails, try the DB.
+            self.data = fetch_properties_from_db()
+            if self.data is not None and len(self.data) == 0:
+                print("DEBUG: DB query returned 0 rows.")
+            if not self.data:
+                print("DEBUG: ❌ Could not fetch properties from DB. Loading from properties.json...")
+                try:
+                    if getattr(sys, 'frozen', False):
+                        base_dir = os.path.dirname(os.path.dirname(sys.executable))
+                    else:
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                    properties_file = os.path.join(base_dir, "data", "properties.json")
+                    with open(properties_file, "r") as f:
+                        self.data = json.load(f)
+                    print(f"DEBUG: ✅ Loaded properties from properties.json at {properties_file}.")
+                except Exception as e:
+                    print("DEBUG: ❌ Error loading properties from properties.json:", e)
+                    self.data = []
         if not self.data:
             self.display_no_data_message()
             return
 
         for prop in self.data:
-            self.tree.insert("", tk.END, values=(
+            self.tree.insert("", tk.END, values=( 
                 prop.get("Property Address", ""),
                 prop.get("Policy Date", ""),
-                prop.get("Policy Number", ""),   # New field
+                prop.get("Policy Number", ""),
                 prop.get("Vested Parties", ""),
                 prop.get("Underwriters", ""),
                 prop.get("Coverage Amount", ""),
@@ -146,6 +200,8 @@ class PropertyView(ttk.Frame):
                 prop.get("Legal Description/Derivation Clause", ""),
                 prop.get("Revision", "")
             ))
+
+        print(f"DEBUG: Total entries loaded: {len(self.data)}")
         print("DEBUG: ✅ Properties refreshed.")
 
     def search_properties(self):
@@ -219,12 +275,3 @@ class PropertyView(ttk.Frame):
             ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w").grid(row=idx, column=1, sticky="w", pady=2)
         
         ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
-
-if __name__ == "__main__":
-    print("DEBUG: ❌✅❌✅❌✅VIEWS MAIN")
-    root = tk.Tk()
-    root.title("Property View Test")
-    root.geometry("800x600")
-    pv = PropertyView(root)
-    pv.pack(fill="both", expand=True)
-    root.mainloop()
