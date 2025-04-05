@@ -1,4 +1,3 @@
-# login.py
 import sys
 import os
 import json
@@ -9,7 +8,31 @@ from src.db_connection import DBConnectionGUI
 from ttkbootstrap import Style
 import subprocess
 import ctypes
-#❌✅
+
+import sys
+import tkinter as tk
+
+# Single instance check (only executed once)
+try:
+    import win32event, win32api, win32con
+except ImportError:
+    print("DEBUG: win32 modules not available; skipping single instance check.")
+else:
+    # Define ERROR_ALREADY_EXISTS if not present.
+    ERROR_ALREADY_EXISTS = 183
+    mutex = win32event.CreateMutex(None, False, "TitleChain_SingleInstance_Mutex")
+    if win32api.GetLastError() == ERROR_ALREADY_EXISTS:
+        try:
+            root = tk.Tk()
+            root.withdraw()  # Hide main window
+            from tkinter import messagebox
+            messagebox.showerror("Error", "Only one instance of TitleChain can be open at a time.")
+        except Exception:
+            print("Only one instance of TitleChain can be open at a time.")
+        sys.exit(0)
+
+# Set a global flag so subsequent modules know the check was already done.
+SINGLE_INSTANCE_CHECK_DONE = True
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     base_dir = os.path.dirname(os.path.dirname(sys.executable))
@@ -19,7 +42,7 @@ else:
 DATA_DIR = os.path.join(base_dir, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
-def load_users():
+def load_users(logged_in_email=None):
     print("DEBUG: load_users() called")
     if not os.path.exists(DATA_DIR):
         print(f"DEBUG: DATA_DIR '{DATA_DIR}' does not exist. Creating it.")
@@ -29,7 +52,15 @@ def load_users():
         try:
             with open(USERS_FILE, "r") as f:
                 users = json.load(f)
-                print("DEBUG: Loaded users:", users)
+                if logged_in_email:
+                    if logged_in_email in users:
+                        print(f"DEBUG: Loaded details for user {logged_in_email}:")
+                        for key, value in users[logged_in_email].items():
+                            print(f"    {key}: {value}")
+                    else:
+                        print(f"DEBUG: No details found for user {logged_in_email}.")
+                else:
+                    print("DEBUG: Loaded users (details not printed).")
                 return users
         except Exception as e:
             print("DEBUG: Error loading users:", e)
@@ -64,7 +95,6 @@ def run_command_as_admin(cmd):
     Uses ShellExecuteW with the 'runas' verb to run a command with elevated privileges.
     Returns True if successful (HINSTANCE > 32), False otherwise.
     """
-    # Run the command via cmd.exe /c <command>
     ret = ctypes.windll.shell32.ShellExecuteW(None, "runas", "cmd.exe", f'/c {cmd}', None, 1)
     return ret > 32
 
@@ -73,7 +103,6 @@ def create_launch_daemon():
     Creates a scheduled task that runs listener.exe at user logon with highest privileges.
     Returns True if the task exists or is successfully created; otherwise, False.
     """
-
     def is_admin():
         try:
             return ctypes.windll.shell32.IsUserAnAdmin()
@@ -86,25 +115,21 @@ def create_launch_daemon():
 
     task_name = "TitleChainListener"
 
-
     if getattr(sys, 'frozen', False):
-        # When frozen, use the directory of the executable.
         base_dir = os.path.dirname(sys.executable)
     else:
-        # When running normally, use __file__
         base_dir = os.path.abspath(os.path.dirname(__file__))
 
     listener_path = os.path.join(base_dir, "listener", "listener.exe")
     print("DEBUG: Listener path resolved to:", listener_path)
     
-    # First, query Task Scheduler to check if the task already exists.
+    # Query Task Scheduler to check if the task already exists.
     query_cmd = f'schtasks /query /tn "{task_name}"'
     result = subprocess.run(query_cmd, shell=True, capture_output=True, text=True)
     if result.returncode == 0:
         print("DEBUG: Scheduled Task already exists.")
         return True
 
-    # Prompt the user.
     response = messagebox.askyesno(
         "Create Task Scheduler for TitleChain",
         "No task scheduler for TitleChain was detected. Would you like to create one so that TitleChain automatically launches when SoftPro starts?"
@@ -113,7 +138,6 @@ def create_launch_daemon():
         print("DEBUG: User declined to create scheduled task.")
         return False
 
-    # Build the schtasks command with elevated privileges.
     cmd = f'schtasks /create /tn "{task_name}" /tr "{listener_path}" /sc onlogon /rl HIGHEST /f'
     
     try:
@@ -134,14 +158,12 @@ def create_launch_daemon():
                 print("DEBUG: Failed to create scheduled task:", result.stderr)
                 return False
 
-        # Attempt to run the task immediately.
         run_cmd = f'schtasks /run /tn "{task_name}"'
         run_result = subprocess.run(run_cmd, shell=True, capture_output=True, text=True)
         if run_result.returncode == 0:
             print("DEBUG: Scheduled task started successfully.")
         else:
             print("DEBUG: Failed to run scheduled task immediately:", run_result.stderr)
-            # Fallback: Directly launch listener.exe.
             try:
                 subprocess.Popen([listener_path])
                 print("DEBUG: Launched listener.exe directly as fallback.")
@@ -149,10 +171,9 @@ def create_launch_daemon():
                 print("DEBUG: Fallback launch failed:", e)
         return True
     except Exception as e:
-        messagebox.showerror("Error", f"Exception creating schedueld task: {e}")
+        messagebox.showerror("Error", f"Exception creating scheduled task: {e}")
         print("DEBUG: Exception creating scheduled task:", e)
         return False
-
 
 class RegistrationGUI(tk.Toplevel):
     def __init__(self, master, on_registration_success):
@@ -183,7 +204,7 @@ class RegistrationGUI(tk.Toplevel):
         # Confirm Email
         tk.Label(self, text="Confirm Email:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
         self.confirm_email_entry = tk.Entry(self, width=25)
-        self.confirm_email_entry.grid(row=3, column=1, padx=10,pady=5)
+        self.confirm_email_entry.grid(row=3, column=1, padx=10, pady=5)
 
         # Password
         tk.Label(self, text="Password:").grid(row=4, column=0, padx=10, pady=5, sticky="w")
@@ -201,7 +222,6 @@ class RegistrationGUI(tk.Toplevel):
 
     def validate_and_register(self):
         print("DEBUG: validate_and_register() called")
-        # Reset entry backgrounds
         for entry in [self.first_name_entry, self.last_name_entry,
                       self.email_entry, self.confirm_email_entry,
                       self.password_entry, self.confirm_password_entry]:
@@ -241,7 +261,7 @@ class RegistrationGUI(tk.Toplevel):
             print("DEBUG: Registration confirmation declined by user.")
             return
 
-        users = load_users()
+        users = load_users()  # We call load_users without email here because we don't need to print details for all users.
         if email in users:
             messagebox.showerror("Registration Failed", "User with this email already exists!")
             print("DEBUG: Registration failed - duplicate email.")
@@ -279,7 +299,6 @@ class LoginGUI(tk.Tk):
         self.logged_in_user = None
         print("DEBUG: ✅ LoginGUI initialized")
 
-        # After a successful login:
         if create_launch_daemon():
             print("DEBUG: ✅ Scheduled task is set up.")
         else:
@@ -305,15 +324,13 @@ class LoginGUI(tk.Tk):
         password = self.password_entry.get().strip()
         print(f"DEBUG: submit_login() called with email: {email}")
 
-        users = load_users()
+        # Pass the email so load_users only prints the details for this user.
+        users = load_users(email)
         if email in users and users[email]["password"] == password:
             messagebox.showinfo("Login Successful", f"Welcome, {users[email]['first_name']}!")
             print("DEBUG: Login successful for user:", users[email])
             self.logged_in_user = users[email]
-            # Instead of calling destroy() (which would tear down the entire Tk interpreter),
-            # we simply close (destroy) this Toplevel, leaving the hidden root alive.
             self.withdraw()
-            # Now launch the DB connection GUI as a new Toplevel attached to the same root.
             print("DEBUG: Launching DBConnectionGUI from submit_login")
             dbconn = DBConnectionGUI(self.master, self.logged_in_user)
         else:
@@ -345,11 +362,3 @@ class LoginGUI(tk.Tk):
         if response:
             self.destroy()
             sys.exit()
-
-
-
-
-
-
-
-

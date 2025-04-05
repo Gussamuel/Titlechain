@@ -69,8 +69,10 @@ class DBConnectionGUI(tk.Toplevel):
         # Buttons for Connect / Exit
         btn_frame = tk.Frame(self)
         btn_frame.pack(pady=(5, 5))
-        tk.Button(btn_frame, text="Connect", width=10, command=self.connect_to_server).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="Exit", width=10, command=self.on_exit).pack(side=tk.LEFT, padx=5)
+        self.connect_button = tk.Button(btn_frame, text="Connect", width=10, command=self.connect_to_server)
+        self.connect_button.pack(side=tk.LEFT, padx=5)
+        self.exit_button = tk.Button(btn_frame, text="Exit", width=10, command=self.on_exit)
+        self.exit_button.pack(side=tk.LEFT, padx=5)
 
         self.connection = None
         print("DEBUG: DBConnectionGUI __init__ complete")
@@ -162,9 +164,16 @@ class DBConnectionGUI(tk.Toplevel):
         Attempt to connect to the 'TitleChainDb' on the specified server.
         If the DB doesn't exist, create it if the user has permission.
         """
+        # Disable UI elements immediately to prevent further clicks.
+        for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+            widget.config(state="disabled")
+        
         server = self.server_entry.get().strip()
         if not server:
             messagebox.showerror("Error", "Please enter or select a server instance.")
+            # Re-enable the UI elements if no server is provided.
+            for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                widget.config(state="normal")
             return
 
         conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={self.database_name};Trusted_Connection=yes;"
@@ -175,8 +184,10 @@ class DBConnectionGUI(tk.Toplevel):
             messagebox.showinfo("Connected", f"Connected to {self.database_name} on {server}")
             # Update default server in user profile.
             self.update_default_server(server)
-            # Save connection
+            # Save connection to global variable.
             db_connection_global.connection = self.connection
+            
+            # Now launch the main UI.
             self.destroy()
             self.master.after(100, self.launch_main_ui)
         except Exception as e:
@@ -189,24 +200,31 @@ class DBConnectionGUI(tk.Toplevel):
                         "Permission Denied",
                         "TitleChainDb does not exist and you do not have permission to create it.\nPlease contact a system administrator."
                     )
+                    # Re-enable UI elements since connection failed.
+                    for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                        widget.config(state="normal")
                     return
                 if messagebox.askyesno("Database Not Found", "TitleChainDb not found. Create a new database?"):
                     if self.create_db(server):
                         print("DEBUG: ✅ Access Granted: Valid Privileges")
-                        messagebox.showinfo("Database Created", "TitleChainDb created successfully.")
-                        try:
-                            self.connection = pyodbc.connect(conn_str)
-                            messagebox.showinfo("Connected", f"Connected to {self.database_name} on {server}")
-                            self.destroy()
-                            self.master.after(100, self.launch_main_ui)
-                        except Exception as e2:
-                            messagebox.showerror("Connection Error", f"Error connecting after creation:\n{e2}")
+                        messagebox.showinfo("Database Created", "TitleChainDb created successfully.\nPlease click Connect again to establish a connection.")
+                        # Re-enable UI elements so user can manually reconnect.
+                        for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                            widget.config(state="normal")
+                        return
                     else:
                         messagebox.showerror("Error", "Failed to create TitleChainDb.")
+                        for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                            widget.config(state="normal")
+                        return
                 else:
                     print("DEBUG: User declined to create TitleChainDb.")
+                    for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                        widget.config(state="normal")
             else:
                 messagebox.showerror("Connection Error", f"Error connecting:\n{e}")
+                for widget in (self.scan_button, self.server_entry, self.connect_button, self.exit_button):
+                    widget.config(state="normal")
 
     def create_db(self, server):
         """
@@ -230,6 +248,7 @@ class DBConnectionGUI(tk.Toplevel):
             create_table_sql = """
                 CREATE TABLE Orders (
                     id INT IDENTITY(1,1) PRIMARY KEY,
+                    transaction_id UNIQUEIDENTIFIER DEFAULT NEWID(),
                     property_address NVARCHAR(255),
                     policy_date DATE,
                     policy_number NVARCHAR(100),

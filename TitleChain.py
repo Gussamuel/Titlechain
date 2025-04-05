@@ -109,17 +109,6 @@ for dll in REQUIRED_DLLS:
     except Exception as e:
         print(f"DEBUG: ❌ Error loading {dll_path}: {e}")
 
-
-# 7) Test whether we can actually import and instantiate something from SoftPro.Select.Client
-# try:
-#     from SoftPro.Select.Client import SelectClient
-#     select_client = SelectClient()
-#     print("DEBUG: ✅ SelectClient instance created successfully:", select_client)
-# except ImportError as e:
-#     print("DEBUG: ❌ Failed to import SoftPro.Select.Client.SelectClient:", e)
-# except Exception as e:
-#     print("DEBUG: ❌ Failed to create SelectClient instance:", e)
-
 def center_window(win, width, height):
     win.update_idletasks()  # Ensure win.winfo_screenwidth() is accurate
     screen_width = win.winfo_screenwidth()
@@ -132,7 +121,7 @@ class TitleChainApp(tk.Toplevel):
     def __init__(self, master):
         super().__init__(master)
         self.title("TitleChain")
-        desired_width = 1440
+        desired_width = 1800
         desired_height = 900
         center_window(self, desired_width, desired_height)
         self.resizable(False, False)
@@ -235,19 +224,28 @@ if __name__ == "__main__":
 # 3. Once the titlechaindb exists, it will only ask the user to connect to a database on startup as opposed to creating one. the titlechaindb should be the only option because it was created by titlechain.
 
 # 4. lastly we need to boot titlechain at the same time that softpro launches, which can be solved if we have titlechain launch on startup every time.
-#
+
+
+
+
+
+
+
+
 # 5. Clean up the UI, make buttons look nice, make sure window sizes are right, make sure style are right
 #
 # 6. Fix formatting for transaction_from, specifically the data formatting and the entry of the data
 #
-# 7. Fix double click view within property view and transaction manager, specifically center viewing, no expanding, and all data can be viewed (test with more data in the vest parties section)
+# 7. DONE/CHECK                   Fix double click view within property view and transaction manager, specifically center viewing, no expanding, and all data can be viewed (test with more data in the vest parties section)
 # 
-# 8. Revision tag. if the revision box is checked, a note is required in order to process. Potentially the revision to another entry in the DB.
+# 8. Revision tag. if the revision box is checked, a note is required in order to process. Potentially the revision to another entry in the DB. Ability to double click a property in the list which then allows you to create a revision for it, taking you to the submit transaction screen with details already filled in ready for change.
 #
-# 9. Dont allow multiple windows to open for ANYTHING, check every window event
+# 9. DONE                         Dont allow multiple windows to open for ANYTHING, check every window event
 #
 # 10. Adjust debug to where teh fetched properties display more elegantly.
 #
 # 11. Populate DB with a bunch of properties.
 #
-# 12. Fix "Revisions" so they show yes's and no's.
+# 12. DONE                  Fix "Revisions" so they show yes's and no's.
+#
+# 13. Edit the scheduled task to where titlechain will open again after softpro is closed.

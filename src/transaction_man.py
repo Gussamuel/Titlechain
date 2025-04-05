@@ -4,7 +4,14 @@ from datetime import datetime, timedelta
 import os
 import sys
 import json
-# ❌✅
+
+def center_window(win, width, height):
+    win.update_idletasks()  # Ensure dimensions are updated
+    screen_width = win.winfo_screenwidth()
+    screen_height = win.winfo_screenheight()
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+    win.geometry(f"{width}x{height}+{x}+{y}")
 
 class TransactionManager(ttk.Frame):
     def __init__(self, parent):
@@ -60,8 +67,10 @@ class TransactionManager(ttk.Frame):
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
         
+        # Updated columns: Added "Transaction ID" as the second column.
         columns = (
             "Select",
+            "Transaction ID",
             "Property Address", 
             "Policy Date",
             "Policy Number",              # New column for Policy Number
@@ -149,13 +158,16 @@ class TransactionManager(ttk.Frame):
     def show_transaction_details(self, transaction):
         details_win = tk.Toplevel(self)
         details_win.title("Transaction Details")
+        center_window(details_win, 600, 400)
         frame = ttk.Frame(details_win, padding=10)
         frame.pack(fill="both", expand=True)
         
+        # Updated fields: add Transaction ID as the first field.
         fields = [
+            ("Transaction ID", transaction.get("Transaction ID", "N/A")),
             ("Property Address", transaction.get("Property Address", "N/A")),
             ("Policy Date", transaction.get("Policy Date", "N/A")),
-            ("Policy Number", transaction.get("Policy Number", "N/A")),  # New field
+            ("Policy Number", transaction.get("Policy Number", "N/A")),
             ("Vested Parties", transaction.get("Vested Parties", "N/A")),
             ("Underwriters", transaction.get("Underwriters", "N/A")),
             ("Coverage Amount", transaction.get("Coverage Amount", "N/A")),
@@ -171,15 +183,23 @@ class TransactionManager(ttk.Frame):
             fields.append(("Revision Parent Policy", transaction.get("Revision Parent Policy", "N/A")))
         
         for idx, (key, value) in enumerate(fields):
-            ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w").grid(row=idx, column=0, sticky="w", pady=2)
-            ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w").grid(row=idx, column=1, sticky="w", pady=2)
+            ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w")\
+               .grid(row=idx, column=0, sticky="w", pady=2)
+            ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w")\
+               .grid(row=idx, column=1, sticky="w", pady=2)
         
-        ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
+        ttk.Button(frame, text="Close", command=details_win.destroy)\
+           .grid(row=len(fields), column=0, columnspan=2, pady=10)
     
     def add_pending_transaction(self, transaction):
         transaction['timestamp'] = datetime.now()
         transaction["selected"] = False
-        
+
+        # Generate a unique Transaction ID if not already present.
+        if "Transaction ID" not in transaction:
+            import uuid
+            transaction["Transaction ID"] = str(uuid.uuid4())
+
         street = transaction.get("Street", "").strip()
         apt = transaction.get("Apt/Building (if applicable)", "").strip()
         city = transaction.get("City", "").strip()
@@ -215,7 +235,7 @@ class TransactionManager(ttk.Frame):
                 transaction["Standard Policy Exceptions"] = "None"
         self.pending_transactions.append(transaction)
         self.dirty = True
-        print("DEBUG: ✅ Added new pending transaction.")
+        print("DEBUG: ✅ Added new pending transaction with ID:", transaction["Transaction ID"])
         self.update_transactions()
     
     def update_transactions(self):
@@ -230,8 +250,9 @@ class TransactionManager(ttk.Frame):
             seconds = total_seconds % 60
             remaining_str = f"{minutes:02d}:{seconds:02d}"
             select_display = "[X]" if transaction.get("selected", False) else "[ ]"
-            self.tree.insert("", "end", iid=idx, values=( 
+            self.tree.insert("", tk.END, iid=idx, values=( 
                 select_display,
+                transaction.get("Transaction ID", "N/A"),
                 transaction.get("Property Address", "N/A"),
                 transaction.get("Policy Date", "N/A"),
                 transaction.get("Policy Number", "N/A"),
@@ -246,9 +267,28 @@ class TransactionManager(ttk.Frame):
                 transaction.get("Revision", "N/A"),
                 remaining_str
             ))
+        
+        # If the data has changed, save it.
         if self.dirty:
             self.save_transactions_to_file()
             self.dirty = False
+        
+        # Only print detailed debug info if the number of transactions has changed.
+        if not hasattr(self, '_last_transaction_count'):
+            self._last_transaction_count = len(self.pending_transactions)
+            self._print_detailed_transactions()
+        elif len(self.pending_transactions) != self._last_transaction_count:
+            self._print_detailed_transactions()
+            self._last_transaction_count = len(self.pending_transactions)
+    
+    def _print_detailed_transactions(self):
+        print("DEBUG: Detailed pending transactions info:")
+        for i, transaction in enumerate(self.pending_transactions, start=1):
+            print(f"DEBUG: Transaction {i}:")
+            for key, value in transaction.items():
+                print(f"    {key}: {value}")
+            print()  # Blank line for separation
+        print(f"DEBUG: Total pending transactions: {len(self.pending_transactions)}")
     
     def save_transactions_to_file(self):
         data_to_save = []
@@ -271,6 +311,11 @@ class TransactionManager(ttk.Frame):
         Submits the given transaction to the TitleChainDb database using the persistent connection.
         Debug statements are included to help diagnose any issues.
         """
+        # Skip submission if the transaction is already processed.
+        if transaction.get("processed", False):
+            print("DEBUG: Transaction already processed, skipping DB submission.")
+            return
+
         try:
             from src.db_connection_global import connection as db_conn
         except ImportError as e:
@@ -284,12 +329,20 @@ class TransactionManager(ttk.Frame):
         from datetime import datetime
         try:
             cursor = db_conn.cursor()
+            # Updated INSERT statement: now includes 13 parameter markers.
             insert_sql = """
                 INSERT INTO Orders 
-                    (property_address, policy_date, policy_number, vested_parties, underwriters, coverage_amount,
+                    (transaction_id, property_address, policy_date, policy_number, vested_parties, underwriters, coverage_amount,
                      owners_policy, lenders_policy, standard_policy_exceptions, property_specific_exceptions, legal_description, revision)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
+            # Ensure Transaction ID is available.
+            transaction_id = transaction.get("Transaction ID")
+            if not transaction_id:
+                import uuid
+                transaction_id = str(uuid.uuid4())
+                transaction["Transaction ID"] = transaction_id
+
             # Convert Revision: if it's not a valid int, default to 1.
             revision_raw = transaction.get("Revision", 1)
             try:
@@ -309,7 +362,6 @@ class TransactionManager(ttk.Frame):
             coverage_raw = transaction.get("Coverage Amount")
             try:
                 import re
-                # Remove any characters except digits and period.
                 coverage_clean = re.sub(r'[^\d\.]', '', coverage_raw)
                 coverage_amount = float(coverage_clean)
             except Exception as e:
@@ -317,12 +369,12 @@ class TransactionManager(ttk.Frame):
                 coverage_amount = None
 
             # Normalize Property Address: replace "Tennessee" (any case) with "TN"
-            # I'm not sure if I actually have to go through and do manual error handling on this or not :(
             property_address = transaction.get("Property Address")
             if property_address:
                 property_address = property_address.replace("Tennessee", "TN").replace("tennessee", "TN")
             
             values = (
+                transaction_id,
                 property_address,
                 policy_date_value,
                 transaction.get("Policy Number"),
@@ -340,6 +392,8 @@ class TransactionManager(ttk.Frame):
             cursor.execute(insert_sql, values)
             db_conn.commit()
             print("DEBUG: Transaction submitted to database successfully.")
+            # Mark transaction as processed immediately after successful submission.
+            transaction["processed"] = True
         except Exception as e:
             print("DEBUG: Exception while submitting transaction to DB:", e)
             raise

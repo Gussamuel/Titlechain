@@ -5,6 +5,14 @@ import os
 import sys
 import json
 
+def center_window(win, width, height):
+    win.update_idletasks()  # Ensure dimensions are updated
+    screen_width = win.winfo_screenwidth()
+    screen_height = win.winfo_screenheight()
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+    win.geometry(f"{width}x{height}+{x}+{y}")
+
 def fetch_properties_from_db():
     """
     Attempts to fetch properties from the TitleChainDb database.
@@ -25,6 +33,7 @@ def fetch_properties_from_db():
         cursor = db_conn.cursor()
         query = """
             SELECT 
+                transaction_id AS "Transaction ID",
                 property_address AS "Property Address", 
                 policy_date AS "Policy Date", 
                 policy_number AS "Policy Number", 
@@ -57,7 +66,9 @@ class PropertyView(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
 
+        # Updated columns: added "Transaction ID" as the first column.
         self.columns = [
+            "Transaction ID",
             "Property Address", 
             "Policy Date",
             "Policy Number",         # New column for Policy Number
@@ -155,19 +166,34 @@ class PropertyView(ttk.Frame):
         self.refresh_view()
 
     def refresh_view(self):
+        # Clear existing rows in the Treeview.
         for row in self.tree.get_children():
             self.tree.delete(row)
 
         # First, try to fetch properties from the blockchain.
         print("DEBUG: ✅ Attempting to fetch properties from blockchain...")
-        self.data = fetch_properties()
-        if not self.data:
+        try:
+            blockchain_data = fetch_properties()
+        except Exception as e:
+            print("DEBUG: Exception while fetching blockchain data:", e)
+            blockchain_data = None
+
+        if blockchain_data:
+            print("DEBUG: ✅ Fetched properties from blockchain.")
+            self.data = blockchain_data
+        else:
             print("DEBUG: ❌ Could not fetch properties from blockchain. Attempting to load from DB...")
-            # If blockchain fetch fails, try the DB.
-            self.data = fetch_properties_from_db()
-            if self.data is not None and len(self.data) == 0:
-                print("DEBUG: DB query returned 0 rows.")
-            if not self.data:
+            try:
+                db_data = fetch_properties_from_db()
+            except Exception as e:
+                print("DEBUG: Exception while fetching DB data:", e)
+                db_data = None
+
+            # Use the DB result (even if empty) if available.
+            if db_data is not None:
+                print("DEBUG: ✅ Fetched properties from DB. Row count:", len(db_data))
+                self.data = db_data
+            else:
                 print("DEBUG: ❌ Could not fetch properties from DB. Loading from properties.json...")
                 try:
                     if getattr(sys, 'frozen', False):
@@ -181,12 +207,31 @@ class PropertyView(ttk.Frame):
                 except Exception as e:
                     print("DEBUG: ❌ Error loading properties from properties.json:", e)
                     self.data = []
+
         if not self.data:
             self.display_no_data_message()
             return
 
+        # Insert each property into the Treeview (only one loop, including Transaction ID).
         for prop in self.data:
+            revision_raw = prop.get("Revision", "")
+            try:
+                rev_int = int(revision_raw)
+                if rev_int == 1:
+                    revision_display = "Yes"
+                elif rev_int == 0:
+                    revision_display = "No"
+                else:
+                    revision_display = str(revision_raw)
+            except Exception:
+                if str(revision_raw).lower() in ["yes"]:
+                    revision_display = "Yes"
+                elif str(revision_raw).lower() in ["no"]:
+                    revision_display = "No"
+                else:
+                    revision_display = str(revision_raw)
             self.tree.insert("", tk.END, values=( 
+                prop.get("Transaction ID", "N/A"),
                 prop.get("Property Address", ""),
                 prop.get("Policy Date", ""),
                 prop.get("Policy Number", ""),
@@ -198,11 +243,18 @@ class PropertyView(ttk.Frame):
                 prop.get("Standard Policy Exceptions", ""),
                 prop.get("Property Specific Exceptions", ""),
                 prop.get("Legal Description/Derivation Clause", ""),
-                prop.get("Revision", "")
+                revision_display
             ))
 
         print(f"DEBUG: Total entries loaded: {len(self.data)}")
         print("DEBUG: ✅ Properties refreshed.")
+
+        # Print each transaction in a neat, multi-line format.
+        print("DEBUG: Fetched the following properties:")
+        for idx, prop in enumerate(self.data, start=1):
+            print(f"\n       Entry {idx}:")
+            for key, val in prop.items():
+                print(f"          {key}: {val}")
 
     def search_properties(self):
         query = self.search_var.get().lower()
@@ -217,6 +269,7 @@ class PropertyView(ttk.Frame):
             return
         for prop in filtered_data:
             self.tree.insert("", tk.END, values=(
+                prop.get("Transaction ID", "N/A"),
                 prop.get("Property Address", ""),
                 prop.get("Policy Date", ""),
                 prop.get("Policy Number", ""),   # New field
@@ -248,13 +301,24 @@ class PropertyView(ttk.Frame):
     def show_property_details(self, prop):
         details_win = tk.Toplevel(self)
         details_win.title("Property Details")
+        center_window(details_win, 600, 400)
         frame = ttk.Frame(details_win, padding=10)
         frame.pack(fill="both", expand=True)
         
+        # Convert revision for display if necessary.
+        rev = prop.get("Revision", "N/A")
+        try:
+            rev_int = int(rev)
+            revision_display = "Yes" if rev_int == 1 else ("No" if rev_int == 0 else str(rev))
+        except Exception:
+            revision_display = str(rev)
+        
+        # Include Transaction ID as the first field.
         fields = [
+            ("Transaction ID", prop.get("Transaction ID", "N/A")),
             ("Property Address", prop.get("Property Address", "N/A")),
             ("Policy Date", prop.get("Policy Date", "N/A")),
-            ("Policy Number", prop.get("Policy Number", "N/A")),  # New field
+            ("Policy Number", prop.get("Policy Number", "N/A")),
             ("Vested Parties", prop.get("Vested Parties", "N/A")),
             ("Underwriters", prop.get("Underwriters", "N/A")),
             ("Coverage Amount", prop.get("Coverage Amount", "N/A")),
@@ -263,15 +327,17 @@ class PropertyView(ttk.Frame):
             ("Standard Policy Exceptions", prop.get("Standard Policy Exceptions", "N/A")),
             ("Property Specific Exceptions", prop.get("Property Specific Exceptions", "N/A")),
             ("Legal Description/Derivation Clause", prop.get("Legal Description/Derivation Clause", "N/A")),
-            ("Revision", prop.get("Revision", "N/A"))
+            ("Revision", revision_display)
         ]
-        # If revision is "Yes", display the additional revision details.
-        if prop.get("Revision", "No") == "Yes":
+        if str(prop.get("Revision", "No")).lower() in ["yes", "1"]:
             fields.append(("Revision Note", prop.get("Revision Note", "N/A")))
             fields.append(("Revision Parent Policy", prop.get("Revision Parent Policy", "N/A")))
         
         for idx, (key, value) in enumerate(fields):
-            ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w").grid(row=idx, column=0, sticky="w", pady=2)
-            ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w").grid(row=idx, column=1, sticky="w", pady=2)
+            ttk.Label(frame, text=f"{key}:", font=("Helvetica", 10, "bold"), anchor="w")\
+               .grid(row=idx, column=0, sticky="w", pady=2)
+            ttk.Label(frame, text=value, font=("Helvetica", 10), anchor="w")\
+               .grid(row=idx, column=1, sticky="w", pady=2)
         
-        ttk.Button(frame, text="Close", command=details_win.destroy).grid(row=len(fields), column=0, columnspan=2, pady=10)
+        ttk.Button(frame, text="Close", command=details_win.destroy)\
+           .grid(row=len(fields), column=0, columnspan=2, pady=10)
