@@ -405,13 +405,30 @@ class TransactionManager(ttk.Frame):
             if transaction.get("processed", False):
                 continue
             if now - transaction['timestamp'] >= timedelta(minutes=1):
+                db_success = False
+                blockchain_success = False
+
+                # Attempt to submit to the database.
                 try:
-                    #self.submit_to_blockchain(transaction)
                     self.submit_transaction_to_db(transaction)
                     print("DEBUG: ✅ Transaction submitted to TitleChainDb.")
+                    db_success = True
                 except Exception as e:
                     print("DEBUG: ❌ Error submitting to TitleChainDb:", e)
+
+                # Attempt to submit to the blockchain.
+                try:
+                    self.submit_to_blockchain(transaction)
+                    print("DEBUG: ✅ Transaction submitted to blockchain.")
+                    blockchain_success = True
+                except Exception as e:
+                    print("DEBUG: ❌ Error submitting to blockchain:", e)
+
+                # If both submissions failed, fallback to saving to properties.json.
+                if not (db_success or blockchain_success):
+                    print("DEBUG: ❌ Neither submission succeeded; saving transaction to properties.json.")
                     self.save_transaction_to_properties(transaction)
+
                 transaction["processed"] = True
             else:
                 remaining.append(transaction)
