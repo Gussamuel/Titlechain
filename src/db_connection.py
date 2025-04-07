@@ -260,7 +260,8 @@ class DBConnectionGUI(tk.Toplevel):
                     standard_policy_exceptions NVARCHAR(MAX),
                     property_specific_exceptions NVARCHAR(MAX),
                     legal_description NVARCHAR(MAX),
-                    revision INT DEFAULT 1
+                    revised INT DEFAULT 1,
+                    revision NVARCHAR(MAX)
                 )
             """
             print("DEBUG: Creating Orders table.")

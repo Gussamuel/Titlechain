@@ -184,8 +184,8 @@ class TransactionForm(ttk.Frame):
         self.revised_var = tk.BooleanVar()
         revised_checkbox = ttk.Checkbutton(self.page_area, text="Revised", variable=self.revised_var)
         revised_checkbox.grid(row=13, column=0, sticky="w", padx=5, pady=5)
-        if "Revision" in self.transaction_data:
-            self.revised_var.set(self.transaction_data["Revision"] == "Yes")
+        if "Revised" in self.transaction_data:
+            self.revised_var.set(self.transaction_data["Revised"] == "Yes")
 
     def toggle_select_all(self):
         """Toggle all checkboxes when 'Select All' is clicked."""
@@ -210,7 +210,7 @@ class TransactionForm(ttk.Frame):
             self.transaction_data["Standard Policy Exceptions"] = ", ".join(selected_exceptions) if selected_exceptions else "None"
             self.transaction_data["Legal Description"] = self.legal_description.get("1.0", tk.END).strip()
             self.transaction_data["Property Specific Exceptions"] = self.property_specific_exceptions.get("1.0", tk.END).strip()
-            self.transaction_data["Revision"] = "Yes" if self.revised_var.get() else "No"
+            self.transaction_data["Revised"] = "Yes" if self.revised_var.get() else "No"
         print("DEBUG: ✅ Current saved data:", self.transaction_data)
 
     def validate_page(self):
@@ -269,15 +269,26 @@ class TransactionForm(ttk.Frame):
 
     def confirm_submission(self):
         """Show confirmation before submission."""
+        # Disable UI elements to prevent multiple submissions.
+        self.next_button.config(state="disabled")
+        self.prev_button.config(state="disabled")
+        for widget in self.page_area.winfo_children():
+            try:
+                widget.config(state="disabled")
+            except Exception:
+                pass
         confirm = messagebox.askyesno(
             "Confirm Submission",
             "Are you sure you want to submit? You will have 15 minutes to edit or cancel this submission if confirmed."
         )
         if confirm:
             self.submit_transaction()
+            self.next_button.config(state="enable")
+            self.prev_button.config(state="enable")
 
     def submit_transaction(self):
         """Capture all data and submit the form."""
+
         self.save_current_page_data()
         transaction_data = self.transaction_data.copy()
         print("DEBUG: Attempting to submit transaction...")
@@ -289,13 +300,29 @@ class TransactionForm(ttk.Frame):
             except Exception as e:
                 print(f"DEBUG: ⚠️ {e}")
                 messagebox.showerror("Error", f"Transaction submission failed: {e}")
+                # Re-enable UI elements if submission fails.
+                self.next_button.config(state="normal")
+                self.prev_button.config(state="normal")
+                for widget in self.page_area.winfo_children():
+                    try:
+                        widget.config(state="normal")
+                    except Exception:
+                        pass
                 return
         else:
             print("DEBUG: ⚠️ No transaction manager callback found!")
+            self.next_button.config(state="normal")
+            self.prev_button.config(state="normal")
+            for widget in self.page_area.winfo_children():
+                try:
+                    widget.config(state="normal")
+                except Exception:
+                    pass
             return
         messagebox.showinfo("Success", "Transaction submitted successfully!")
         print("DEBUG: ✅ Submission complete. Resetting form...")
         self.reset_form()
+
 
     def reset_form(self):
         """Reset the form to its initial state."""

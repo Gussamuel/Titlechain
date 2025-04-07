@@ -9,9 +9,6 @@ from ttkbootstrap import Style
 import subprocess
 import ctypes
 
-import sys
-import tkinter as tk
-
 # Single instance check (only executed once)
 try:
     import win32event, win32api, win32con
@@ -35,15 +32,17 @@ else:
 SINGLE_INSTANCE_CHECK_DONE = True
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    # When frozen, the executable is in the "dist" folder.
     base_dir = os.path.dirname(os.path.dirname(sys.executable))
 else:
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
 DATA_DIR = os.path.join(base_dir, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 
 def load_users(logged_in_email=None):
     print("DEBUG: load_users() called")
+
     if not os.path.exists(DATA_DIR):
         print(f"DEBUG: DATA_DIR '{DATA_DIR}' does not exist. Creating it.")
         os.makedirs(DATA_DIR)
@@ -116,13 +115,18 @@ def create_launch_daemon():
     task_name = "TitleChainListener"
 
     if getattr(sys, 'frozen', False):
-        base_dir = os.path.dirname(sys.executable)
+        # In onefile mode, PyInstaller extracts files into sys._MEIPASS.
+        base_dir = getattr(sys, '_MEIPASS', None)
+        if base_dir is None or not os.path.exists(os.path.join(base_dir, "listener.exe")):
+            # Fallback: assume the executable is in a temporary folder and the real dist folder is one level up.
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(sys.executable), "dist"))
     else:
-        base_dir = os.path.abspath(os.path.dirname(__file__))
+        # Not frozen – use the source file location.
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "dist"))
 
-    listener_path = os.path.join(base_dir, "listener", "listener.exe")
+    listener_path = os.path.join(base_dir, "listener.exe")
     print("DEBUG: Listener path resolved to:", listener_path)
-    
+            
     # Query Task Scheduler to check if the task already exists.
     query_cmd = f'schtasks /query /tn "{task_name}"'
     result = subprocess.run(query_cmd, shell=True, capture_output=True, text=True)
@@ -138,7 +142,7 @@ def create_launch_daemon():
         print("DEBUG: User declined to create scheduled task.")
         return False
 
-    cmd = f'schtasks /create /tn "{task_name}" /tr "{listener_path}" /sc onlogon /rl HIGHEST /f'
+    cmd = f'schtasks /create /tn "{task_name}" /tr "{listener_path}" /sc minute /mo 1 /rl HIGHEST /f'
     
     try:
         if not is_admin():

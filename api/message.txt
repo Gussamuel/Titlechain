@@ -1,0 +1,362 @@
+import os
+import time
+import threading
+import socket
+import requests
+import logging
+from flask import Flask, request, jsonify
+from blockchain import Blockchain
+from form_data import FormData
+from network import register_node, get_peers, consensus_algorithm, health_check_nodes
+from transaction import Transaction
+
+
+
+# SET UP TRANSACTION ID HANDLING > GENERATE ID UPON TRANSACTION CREATION, THEN RETURN A REQUEST BACK AFTER POST WITH THE ID
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Create Flask app instance
+app = Flask(__name__)
+
+# Instantiate the blockchain (loads existing chain/pending transactions or creates genesis block)
+blockchain = Blockchain()
+
+# Protocol version
+PROTOCOL_VERSION = "1.0.0"
+
+# -------------------------
+# Utility Functions
+# -------------------------
+def get_my_ip():
+    """Automatically determine the local IP address using a UDP socket."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+def scan_local_nodes(my_address):
+    """
+    Scan a predefined range of ports on the local IP for healthy nodes.
+    This helps auto-discovery when no bootstrap nodes are provided.
+    """
+    ip, my_port = my_address.split(":")
+    discovered = []
+    # Adjust the range if needed.
+    for port in range(5000, 5011):
+        if str(port) == my_port:
+            continue
+        candidate = f"{ip}:{port}"
+        try:
+            url = f"http://{candidate}/health"
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                register_node(candidate)
+                discovered.append(candidate)
+                logging.info(f"Discovered local node: {candidate}")
+        except Exception:
+            # If no response, move on.
+            pass
+    return discovered
+
+# -------------------------
+# API Endpoints
+# -------------------------
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint."""
+    return jsonify({
+        "status": "OK",
+        "protocol_version": PROTOCOL_VERSION,
+        "timestamp": time.time()
+    }), 200
+
+@app.route("/version", methods=["GET"])
+def version():
+    """Returns the current protocol version."""
+    return jsonify({"protocol_version": PROTOCOL_VERSION}), 200
+
+@app.route("/transactions", methods=["POST"])
+def add_transaction():
+    """
+    Submit a new transaction.
+    Expects a JSON payload with the following fields:
+      - Property Address
+      - Policy Date
+      - Policy Number
+      - Vested Parties
+      - Underwriters
+      - Coverage Amount
+      - Owner's policy
+      - Lender Policy
+      - Standard Policy Exception
+      - Property Specific Exceptions
+      - Legal Description
+      - Revised
+      - Revision
+    Returns the transaction ID upon successful submission.
+    """
+    data = request.get_json() or request.form
+    required_fields = [
+        "Property Address",
+        "Policy Date",
+        "Policy Number",
+        "Vested Parties",
+        "Underwriters",
+        "Coverage Amount",
+        "Owner's policy",
+        "Lender Policy",
+        "Standard Policy Exception",
+        "Property Specific Exceptions",
+        "Legal Description",
+        "Revised",
+        "Revision"
+    ]
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        logging.error(f"Missing fields in transaction: {missing_fields}")
+        return jsonify({"error": f"Missing fields: {', '.join(missing_fields)}"}), 400
+
+    try:
+        form_data = FormData(
+            address=data["Property Address"],
+            date=data["Policy Date"],
+            policy_number=data["Policy Number"],
+            vested=data["Vested Parties"],
+            underwriters=data["Underwriters"],
+            coverage_amount=data["Coverage Amount"],
+            owners_policy=data["Owner's policy"],
+            lender_policy=data["Lender Policy"],
+            standard_policy_exception=data["Standard Policy Exception"],
+            property_specific_exceptions=data["Property Specific Exceptions"],
+            legal_description=data["Legal Description"],
+            revised=(data["Revised"] in [True, "true", "True", "1"]),
+            revision=data["Revision"]
+        )
+        # Create the transaction object and add it to the pending queue
+        transaction = Transaction(form_data)
+        blockchain.current_transactions.put(transaction)
+        blockchain.save_pending()  # Persist pending transactions
+
+        # Automatically mine if threshold is reached (example: 2 transactions)
+        if blockchain.current_transactions.qsize() >= 2:
+            blockchain.mine()
+
+        logging.info("Transaction submitted via API.")
+        return jsonify({
+            "message": "Transaction submitted successfully.",
+            "transaction_id": transaction.tx_id
+        }), 201
+
+    except Exception as e:
+        logging.error(f"Error processing transaction: {e}")
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/blocks/<int:index>", methods=["GET"])
+def get_block(index):
+    """
+    Returns a specific block from the blockchain by its index.
+    """
+    chain = blockchain.get_chain()
+    if index < 0 or index >= len(chain):
+        logging.error(f"Block index {index} out of range.")
+        return jsonify({"error": "Block index out of range"}), 404
+
+    block = chain[index]
+    logging.info(f"Block {index} requested via API.")
+    return jsonify(block), 200
+
+
+
+@app.route("/chain", methods=["GET"])
+def get_chain():
+    """Returns the full blockchain as a JSON array."""
+    chain_data = blockchain.get_chain()
+    logging.info("Chain data requested via API.")
+    return jsonify(chain_data), 200
+
+@app.route("/transactions/pending", methods=["GET"])
+def get_pending_transactions():
+    """Returns a list of pending transactions."""
+    pending = blockchain.get_pending_transactions()
+    logging.info("Pending transactions requested via API.")
+    return jsonify(pending), 200
+
+@app.route("/nodes/register", methods=["POST"])
+def register_nodes():
+    """
+    Registers new nodes.
+    Expects a JSON payload with a key 'nodes' containing a list of node addresses.
+    """
+    data = request.get_json()
+    nodes_list = data.get("nodes")
+    if not nodes_list:
+        return jsonify({"error": "Please supply a valid list of nodes"}), 400
+
+    for node in nodes_list:
+        register_node(node)
+    logging.info(f"Nodes registered: {nodes_list}")
+    return jsonify({"message": "New nodes have been added", "total_nodes": get_peers()}), 201
+
+@app.route("/nodes", methods=["GET"])
+def list_nodes():
+    """Returns a list of registered nodes."""
+    nodes_list = get_peers()
+    return jsonify({"nodes": nodes_list}), 200
+
+@app.route("/nodes/live", methods=["GET"])
+def live_nodes():
+    """
+    Returns a count and list of live (healthy) nodes.
+    Performs a health check on all registered nodes.
+    """
+    healthy = health_check_nodes()
+    return jsonify({"live_nodes_count": len(healthy), "live_nodes": healthy}), 200
+
+@app.route("/nodes/resolve", methods=["GET"])
+def consensus():
+    """
+    Runs the consensus algorithm to resolve any conflicts.
+    If a longer chain is found among peers, it replaces the local chain.
+    """
+    replaced = consensus_algorithm(blockchain)
+    if replaced:
+        message = "Our chain was replaced by a longer valid chain."
+    else:
+        message = "Our chain is authoritative."
+    return jsonify({"message": message, "chain": blockchain.get_chain()}), 200
+
+# -------------------------
+# Automatic Startup Tasks
+# -------------------------
+def register_with_peers(my_address):
+    """
+    Automatically register this node with bootstrap nodes.
+    BOOTSTRAP_NODES should be provided as a comma-separated list via the environment variable.
+    """
+    bootstrap_nodes = os.environ.get("BOOTSTRAP_NODES")
+    if bootstrap_nodes:
+        nodes_list = bootstrap_nodes.split(",")
+        for node in nodes_list:
+            node = node.strip()
+            try:
+                url = f"http://{node}/nodes/register"
+                payload = {"nodes": [my_address]}
+                response = requests.post(url, json=payload, timeout=5)
+                if response.status_code == 201:
+                    logging.info(f"Successfully registered with node {node}")
+                else:
+                    logging.error(f"Failed to register with node {node}: {response.text}")
+            except Exception as e:
+                logging.error(f"Error registering with node {node}: {e}")
+    else:
+        logging.info("No bootstrap nodes provided for registration.")
+
+def confirm_peer_contact():
+    """Reach out to all registered peers to confirm connectivity."""
+    peers = get_peers()
+    for node in peers:
+        try:
+            url = f"http://{node}/nodes"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                logging.info(f"Successfully contacted peer {node}")
+            else:
+                logging.error(f"Failed to contact peer {node}: {response.text}")
+        except Exception as e:
+            logging.error(f"Error contacting peer {node}: {e}")
+
+def auto_startup_tasks(my_address):
+    """
+    Execute automatic startup tasks:
+      - Register this node with bootstrap nodes.
+      - Register this node as its own peer (so at least one node is always in the list).
+      - If no bootstrap nodes are provided or no nodes registered, scan local ports.
+      - Confirm contact with registered peers.
+    """
+    # Register self
+    from network import register_node  # ensure we have the function imported
+    register_node(my_address)
+    
+    # Attempt to register with any bootstrap nodes.
+    register_with_peers(my_address)
+    
+    # If no nodes are registered, attempt local discovery.
+    if not get_peers() or len(get_peers()) <= 1:
+        logging.info("No other nodes found, scanning local ports for nodes...")
+        scan_local_nodes(my_address)
+    
+    # Wait briefly to allow registrations to propagate.
+    time.sleep(5)
+    confirm_peer_contact()
+
+
+def scan_local_nodes(my_address):
+    """
+    Scan a range of local ports (e.g., 5000-5010) for healthy nodes and register them.
+    """
+    ip, my_port = my_address.split(":")
+    discovered = []
+    for port in range(5000, 5011):
+        if str(port) == my_port:
+            continue
+        candidate = f"{ip}:{port}"
+        try:
+            url = f"http://{candidate}/health"
+            response = requests.get(url, timeout=2)
+            if response.status_code == 200:
+                register_node(candidate)
+                discovered.append(candidate)
+                logging.info(f"Discovered local node: {candidate}")
+        except Exception:
+            pass
+    return discovered
+
+def get_free_port(start=5000, end=5010):
+    """
+    Scan for a free TCP port in the given range.
+    Returns the first available port.
+    """
+    import socket
+    for port in range(start, end + 1):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("", port))
+                return port
+            except OSError:
+                continue
+    raise Exception("No free port found in the specified range")
+
+
+
+# -------------------------
+# Main
+# -------------------------
+if __name__ == "__main__":
+    # Determine our node's IP automatically.
+    local_ip = get_my_ip()
+
+    # If a PORT environment variable is provided, try to use it; otherwise, get a free port.
+    if "PORT" in os.environ:
+        try:
+            port = int(os.environ["PORT"])
+        except ValueError:
+            port = get_free_port()
+    else:
+        port = get_free_port()
+
+    # Optionally override with MY_NODE_ADDRESS env variable; otherwise, construct it.
+    my_address = os.environ.get("MY_NODE_ADDRESS", f"{local_ip}:{port}")
+    logging.info(f"My node address: {my_address}")
+
+    # Start automatic startup tasks in a background thread.
+    threading.Thread(target=auto_startup_tasks, args=(my_address,), daemon=True).start()
+
+    # Run Flask server on all interfaces so external devices can connect.
+    app.run(host="0.0.0.0", port=port, debug=True)

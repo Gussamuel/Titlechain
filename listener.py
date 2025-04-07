@@ -1,37 +1,53 @@
-import sys
-import time
-import psutil
-import subprocess
-import os
+import psutil, subprocess, time, os
 
-def wait_for_softpro_launch():
-    print("DEBUG: Waiting for any process containing 'select' in its name...")
-    while True:
-        for proc in psutil.process_iter(['name']):
-            try:
-                pname = proc.info['name']
-                if pname and "select" in pname.lower():
-                    print("DEBUG: SOFTPRO LAUNCH DETECTED, INITIALIZING")
-                    
-                    # If frozen, use the directory of the executable; otherwise use this file's directory.
-                    if getattr(sys, 'frozen', False):
-                        base_dir = os.path.dirname(sys.executable)
-                    else:
-                        base_dir = os.path.abspath(os.path.dirname(__file__))
-                    
-                    # Go up one directory to find TitleChain.exe:
-                    # dist/
-                    #   TitleChain.exe
-                    #   listener/
-                    #     listener.exe
-                    titlechain_exe = os.path.abspath(os.path.join(base_dir, "..", "TitleChain.exe"))
-                    
-                    print("DEBUG: Launching TitleChain from:", titlechain_exe)
-                    subprocess.Popen([titlechain_exe])
-                    return
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-        time.sleep(5)
+def is_softpro_running():
+    # Check for a process whose name contains "select" (adjust as needed)
+    for proc in psutil.process_iter(['name']):
+        try:
+            if proc.info['name'] and "select" in proc.info['name'].lower():
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+def is_titlechain_running():
+    # Check for TitleChain.exe in running processes (adjust as needed)
+    for proc in psutil.process_iter(['name']):
+        try:
+            if proc.info['name'] and proc.info['name'].lower() == "titlechain.exe":
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+def launch_titlechain():
+    # Determine the base directory where listener.exe is located.
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    # Change working directory to the dist folder.
+    # For example, if your folder structure is:
+    #   TitleChain/
+    #      dist/
+    #         TitleChain.exe
+    #         listener.exe
+    os.chdir(base_dir)
+    print("DEBUG: Working directory set to:", os.getcwd())
+    
+    # Construct the full path to TitleChain.exe.
+    titlechain_exe = os.path.join(base_dir, "TitleChain.exe")
+    if os.path.exists(titlechain_exe):
+        subprocess.Popen([titlechain_exe])
+        print("DEBUG: Launched TitleChain from:", titlechain_exe)
+    else:
+        print("DEBUG: TitleChain.exe not found at:", titlechain_exe)
+
+def main():
+    if is_softpro_running():
+        if not is_titlechain_running():
+            launch_titlechain()
+        else:
+            print("DEBUG: TitleChain is already running.")
+    else:
+        print("DEBUG: SoftPro is not running; no action taken.")
 
 if __name__ == "__main__":
-    wait_for_softpro_launch()
+    main()

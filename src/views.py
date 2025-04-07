@@ -1,9 +1,22 @@
 import tkinter as tk
 from tkinter import ttk
-from src.utils import fetch_properties  # This will fetch data from the blockchain when ready
 import os
 import sys
 import json
+import requests, ssl
+from requests.adapters import HTTPAdapter
+from urllib3.poolmanager import PoolManager
+from requests.exceptions import SSLError, ConnectTimeout
+
+class TLSAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+        self.poolmanager = PoolManager(
+            num_pools=connections,
+            maxsize=maxsize,
+            block=block,
+            ssl_version=ssl.PROTOCOL_TLSv1_2,
+            **pool_kwargs
+        )
 
 def center_window(win, width, height):
     win.update_idletasks()  # Ensure dimensions are updated
@@ -45,7 +58,7 @@ def fetch_properties_from_db():
                 standard_policy_exceptions AS "Standard Policy Exceptions", 
                 property_specific_exceptions AS "Property Specific Exceptions", 
                 legal_description AS "Legal Description/Derivation Clause", 
-                revision AS "Revision"
+                revised AS "Revised"
             FROM Orders
         """
         print("DEBUG: Executing DB query to fetch properties.")
@@ -80,6 +93,7 @@ class PropertyView(ttk.Frame):
             "Standard Policy Exceptions", 
             "Property Specific Exceptions",
             "Legal Description/Derivation Clause",
+            "Revised",
             "Revision"
         ]
 
@@ -170,30 +184,83 @@ class PropertyView(ttk.Frame):
         for row in self.tree.get_children():
             self.tree.delete(row)
 
-        # First, try to fetch properties from the blockchain.
-        print("DEBUG: ✅ Attempting to fetch properties from blockchain...")
-        try:
-            blockchain_data = fetch_properties()
-        except Exception as e:
-            print("DEBUG: Exception while fetching blockchain data:", e)
-            blockchain_data = None
+        # Define the blockchain endpoint template.
+        blockchain_url_template = "http://192.168.1.29:5000/blocks/{}"
+        
+        # Create a requests session with our TLS adapter.
+        session = requests.Session()
+        session.mount("https://", TLSAdapter())
 
-        if blockchain_data:
-            print("DEBUG: ✅ Fetched properties from blockchain.")
-            self.data = blockchain_data
+        print("DEBUG: ✅ Attempting to fetch properties from blockchain...")
+
+        # First, fetch block 1.
+        block1_url = blockchain_url_template.format(1)
+        try:
+            print(f"DEBUG: Fetching block 1 from: {block1_url}")
+            response = session.get(block1_url, timeout=10, verify=False)
+            response.raise_for_status()
+            block1_data = response.json()
+        except Exception as e:
+            print("DEBUG: ❌ Exception while fetching block 1:", e)
+            block1_data = None
+
+        # If block 1 returns data, accumulate transactions from it and subsequent blocks.
+        if block1_data:
+            if isinstance(block1_data, dict) and "transactions" in block1_data:
+                all_transactions = block1_data["transactions"]
+                print(f"DEBUG: Block 1 contains {len(all_transactions)} transaction(s).")
+            elif isinstance(block1_data, list):
+                all_transactions = block1_data
+                print(f"DEBUG: Block 1 returned a list with {len(all_transactions)} transaction(s).")
+            else:
+                print("DEBUG: ❌ Unexpected format for block 1.")
+                all_transactions = []
+
+            # Iterate over subsequent blocks until a block returns 404 or empty.
+            block_num = 2
+            while True:
+                current_url = blockchain_url_template.format(block_num)
+                try:
+                    print(f"DEBUG: Fetching block {block_num} from: {current_url}")
+                    response = session.get(current_url, timeout=10, verify=False)
+                    # If the block is out-of-range, the server should return 404.
+                    if response.status_code == 404:
+                        print(f"DEBUG: Block {block_num} returned 404 (no more blocks). Ending iteration.")
+                        break
+                    response.raise_for_status()
+                    block_data = response.json()
+                    if not block_data:
+                        print(f"DEBUG: Block {block_num} returned no data. Ending iteration.")
+                        break
+                    if isinstance(block_data, dict) and "transactions" in block_data:
+                        tx_list = block_data["transactions"]
+                        print(f"DEBUG: Block {block_num} contains {len(tx_list)} transaction(s).")
+                        all_transactions.extend(tx_list)
+                    elif isinstance(block_data, list):
+                        print(f"DEBUG: Block {block_num} returned a list with {len(block_data)} transaction(s).")
+                        all_transactions.extend(block_data)
+                    else:
+                        print(f"DEBUG: Block {block_num} returned unexpected format.")
+                    block_num += 1
+                except Exception as e:
+                    # If we catch an exception and it’s due to a 404, break out.
+                    if hasattr(e, 'response') and e.response is not None and e.response.status_code == 404:
+                        print(f"DEBUG: Block {block_num} not found (404). Ending iteration.")
+                    else:
+                        print(f"DEBUG: Exception while fetching block {block_num}: {e}")
+                    break
+
+            self.data = all_transactions
         else:
-            print("DEBUG: ❌ Could not fetch properties from blockchain. Attempting to load from DB...")
+            # If block 1 returns no data, fall back to the DB.
+            print("DEBUG: ❌ Could not fetch properties from blockchain (block 1 empty). Attempting to load from DB...")
             try:
                 db_data = fetch_properties_from_db()
             except Exception as e:
                 print("DEBUG: Exception while fetching DB data:", e)
                 db_data = None
 
-            # Use the DB result (even if empty) if available.
-            if db_data is not None:
-                print("DEBUG: ✅ Fetched properties from DB. Row count:", len(db_data))
-                self.data = db_data
-            else:
+            if db_data is None or len(db_data) == 0:
                 print("DEBUG: ❌ Could not fetch properties from DB. Loading from properties.json...")
                 try:
                     if getattr(sys, 'frozen', False):
@@ -207,29 +274,42 @@ class PropertyView(ttk.Frame):
                 except Exception as e:
                     print("DEBUG: ❌ Error loading properties from properties.json:", e)
                     self.data = []
+            else:
+                print("DEBUG: ✅ Fetched properties from DB. Row count:", len(db_data))
+                self.data = db_data
 
+        # If data is still empty, display the no-data message.
         if not self.data:
             self.display_no_data_message()
             return
 
-        # Insert each property into the Treeview (only one loop, including Transaction ID).
+        # Update the Treeview with the data.
         for prop in self.data:
-            revision_raw = prop.get("Revision", "")
-            try:
-                rev_int = int(revision_raw)
-                if rev_int == 1:
-                    revision_display = "Yes"
-                elif rev_int == 0:
-                    revision_display = "No"
-                else:
-                    revision_display = str(revision_raw)
-            except Exception:
-                if str(revision_raw).lower() in ["yes"]:
-                    revision_display = "Yes"
-                elif str(revision_raw).lower() in ["no"]:
-                    revision_display = "No"
-                else:
-                    revision_display = str(revision_raw)
+            # Ensure prop is a dict. If not, try to parse it.
+            if not isinstance(prop, dict):
+                try:
+                    prop = json.loads(prop)
+                except Exception as e:
+                    print("DEBUG: Could not parse property entry as dict:", prop, e)
+                    continue
+
+            # Process the revision value for display.
+            if "Revised" in prop:
+                revised_val = prop["Revised"]
+                revision_display = "Yes" if revised_val else "No"
+            else:
+                revision_raw = prop.get("Revision", "")
+                try:
+                    rev_int = int(revision_raw)
+                    revision_display = "Yes" if rev_int == 1 else "No" if rev_int == 0 else str(revision_raw)
+                except Exception:
+                    if str(revision_raw).lower() in ["yes"]:
+                        revision_display = "Yes"
+                    elif str(revision_raw).lower() in ["no"]:
+                        revision_display = "No"
+                    else:
+                        revision_display = str(revision_raw)
+            
             self.tree.insert("", tk.END, values=( 
                 prop.get("Transaction ID", "N/A"),
                 prop.get("Property Address", ""),
@@ -238,18 +318,18 @@ class PropertyView(ttk.Frame):
                 prop.get("Vested Parties", ""),
                 prop.get("Underwriters", ""),
                 prop.get("Coverage Amount", ""),
-                prop.get("Owner's Policy", ""),
-                prop.get("Lender's Policy", ""),
-                prop.get("Standard Policy Exceptions", ""),
+                prop.get("Owner's policy", ""),
+                prop.get("Lender Policy", ""),
+                prop.get("Standard Policy Exception", ""),
                 prop.get("Property Specific Exceptions", ""),
-                prop.get("Legal Description/Derivation Clause", ""),
+                prop.get("Legal Description", ""),
                 revision_display
             ))
-
+        
         print(f"DEBUG: Total entries loaded: {len(self.data)}")
         print("DEBUG: ✅ Properties refreshed.")
 
-        # Print each transaction in a neat, multi-line format.
+        # Print each transaction in a human-readable format.
         print("DEBUG: Fetched the following properties:")
         for idx, prop in enumerate(self.data, start=1):
             print(f"\n       Entry {idx}:")
@@ -281,7 +361,7 @@ class PropertyView(ttk.Frame):
                 prop.get("Standard Policy Exceptions", ""),
                 prop.get("Property Specific Exceptions", ""),
                 prop.get("Legal Description/Derivation Clause", ""),
-                prop.get("Revision", "")
+                prop.get("Revised", "")
             ))
         print("DEBUG: Searching for:", query)
 
@@ -305,13 +385,13 @@ class PropertyView(ttk.Frame):
         frame = ttk.Frame(details_win, padding=10)
         frame.pack(fill="both", expand=True)
         
-        # Convert revision for display if necessary.
-        rev = prop.get("Revision", "N/A")
+        # Convert revised for display if necessary.
+        rev = prop.get("Revised", "N/A")
         try:
             rev_int = int(rev)
-            revision_display = "Yes" if rev_int == 1 else ("No" if rev_int == 0 else str(rev))
+            revised_display = "Yes" if rev_int == 1 else ("No" if rev_int == 0 else str(rev))
         except Exception:
-            revision_display = str(rev)
+            revised_display = str(rev)
         
         # Include Transaction ID as the first field.
         fields = [
@@ -327,9 +407,9 @@ class PropertyView(ttk.Frame):
             ("Standard Policy Exceptions", prop.get("Standard Policy Exceptions", "N/A")),
             ("Property Specific Exceptions", prop.get("Property Specific Exceptions", "N/A")),
             ("Legal Description/Derivation Clause", prop.get("Legal Description/Derivation Clause", "N/A")),
-            ("Revision", revision_display)
+            ("Revised", revised_display)
         ]
-        if str(prop.get("Revision", "No")).lower() in ["yes", "1"]:
+        if str(prop.get("Revised", "No")).lower() in ["yes", "1"]:
             fields.append(("Revision Note", prop.get("Revision Note", "N/A")))
             fields.append(("Revision Parent Policy", prop.get("Revision Parent Policy", "N/A")))
         

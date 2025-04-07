@@ -238,7 +238,7 @@ if __name__ == "__main__":
 #
 # 7. DONE/CHECK                   Fix double click view within property view and transaction manager, specifically center viewing, no expanding, and all data can be viewed (test with more data in the vest parties section)
 # 
-# 8. Revision tag. if the revision box is checked, a note is required in order to process. Potentially the revision to another entry in the DB. Ability to double click a property in the list which then allows you to create a revision for it, taking you to the submit transaction screen with details already filled in ready for change.
+# 8. !!!!!!!!!!!!Revision tag. if the revised box is checked, a note is required in order to process. Potentially the revision to another entry in the DB. Ability to double click a property in the list which then allows you to create a revision for it, taking you to the submit transaction screen with details already filled in ready for change.
 #
 # 9. DONE                         Dont allow multiple windows to open for ANYTHING, check every window event
 #
@@ -249,3 +249,13 @@ if __name__ == "__main__":
 # 12. DONE                  Fix "Revisions" so they show yes's and no's.
 #
 # 13. Edit the scheduled task to where titlechain will open again after softpro is closed.
+#
+# 14. DONE                  REMOVED TRANSACTION ID CREATION. AFTER A SUBMISSION TO THE BLOCKCHAIN, GET THAT TRANSACTION AND THE TRANSACTION ID FROM THE BLOCKCHAIN AND MOVE IT TO THE DATABSE. REMOVE TRANSACTION ID CREATION
+#
+# 15. use http://192.168.1.24:5000/blocks/1 (create an iterator for the blocks as well as parsing through them)
+#
+# 16. Compare blockchain and database transaction IDs so we dont get dupes in the db
+#
+# 17. First time data import from Rudy title DB to titlechainDB and blockchain
+#
+# 18. Softpro functions need to be done, outputs needs to be done
