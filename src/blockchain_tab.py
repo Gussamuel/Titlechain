@@ -5,6 +5,7 @@ from tkinter import ttk
 from src.transaction_man import TransactionManager
 from src.transaction_form import TransactionForm
 from src.views import PropertyView
+from src.softpro_plugin import SoftProTool
 
 class BlockchainTab(ttk.Frame):
     def __init__(self, parent):
@@ -29,3 +30,8 @@ class BlockchainTab(ttk.Frame):
         # 3) Create the PropertyView tab
         self.property_view = PropertyView(self.inner_notebook)
         self.inner_notebook.add(self.property_view, text="View Properties")
+
+
+        # 4) SoftPro Plugin
+        self.softpro_tool = SoftProTool(self.inner_notebook)
+        self.inner_notebook.add(self.softpro_tool, text="SoftPro Plugin")

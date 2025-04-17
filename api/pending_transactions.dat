@@ -1,1 +1,18 @@
-[]
+[
+    {
+        "Property Address": "1, 1, 1",
+        "Policy Date": "1",
+        "Policy Number": "1",
+        "Vested Parties": "1",
+        "Underwriters": "1",
+        "Coverage Amount": "1",
+        "Owner's policy": "No",
+        "Lender Policy": "Yes",
+        "Standard Policy Exception": "1, 2, 3, 4, 5",
+        "Property Specific Exceptions": "1",
+        "Legal Description": "1",
+        "Revised": false,
+        "Revision": "",
+        "Transaction ID": "e48444d3-6c0a-4898-9fdd-fba739856eb3"
+    }
+]

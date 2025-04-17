@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="CommandTableCodeGen"
+    targetNamespace="http://schemas.softprocorp.com/select/shell/commandtable/codegen/2008/03"
+    elementFormDefault="qualified"
+    xmlns="http://schemas.softprocorp.com/select/shell/commandtable/codegen/2008/03"
+    xmlns:mstns="http://schemas.softprocorp.com/select/shell/commandtable/codegen/2008/03"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:attribute name="classModifier" default="Public" type="ClassModifierType" />
+
+  <xs:simpleType name="ClassModifierType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Public" />
+      <xs:enumeration value="NonPublic" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+</xs:schema>

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/SoftPro.Select.Controls.nuspec" Id="R2714eead2f4c43a7" />
-  <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/6c0f4f94bf01425daea5f96081833517.psmdcp" Id="R2462a251c4bb4f37" />
-</Relationships>

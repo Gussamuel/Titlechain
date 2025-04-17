@@ -69,7 +69,10 @@ def load_users(logged_in_email=None):
     return {}
 
 def save_users(users):
-    print("DEBUG: save_users() called with users:", users)
+    # You know who changed: the current_user in login_global
+    import src.login_global as lg
+    email = lg.current_user.get("email", "<unknown>")
+    print(f"DEBUG: save_users() called for user: {email}")
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=4)
     print("DEBUG: Users saved successfully.")
@@ -303,10 +306,11 @@ class LoginGUI(tk.Tk):
         self.logged_in_user = None
         print("DEBUG: ✅ LoginGUI initialized")
 
-        if create_launch_daemon():
-            print("DEBUG: ✅ Scheduled task is set up.")
-        else:
-            print("DEBUG: Scheduled task was not created.")
+        # We will work on this later, it's causing issues.
+        # if create_launch_daemon():
+        #     print("DEBUG: ✅ Scheduled task is set up.")
+        # else:
+        #     print("DEBUG: Scheduled task was not created.")
 
         tk.Label(self, text="Email:").pack(pady=(20, 0))
         self.email_entry = tk.Entry(self, width=40)
@@ -328,15 +332,24 @@ class LoginGUI(tk.Tk):
         password = self.password_entry.get().strip()
         print(f"DEBUG: submit_login() called with email: {email}")
 
-        # Pass the email so load_users only prints the details for this user.
+        # Pass the email so load_users only prints this user’s details
         users = load_users(email)
         if email in users and users[email]["password"] == password:
             messagebox.showinfo("Login Successful", f"Welcome, {users[email]['first_name']}!")
             print("DEBUG: Login successful for user:", users[email])
             self.logged_in_user = users[email]
-            self.withdraw()
+
+            # —— NEW: store in global module
+            import src.login_global as login_global
+            login_global.current_user = self.logged_in_user
+
+            # Launch TitleChain DB connection (default mode)
             print("DEBUG: Launching DBConnectionGUI from submit_login")
-            dbconn = DBConnectionGUI(self.master, self.logged_in_user)
+            dlg = DBConnectionGUI(self, self.logged_in_user, mode="titlechain")
+            self.wait_window(dlg)
+
+            # Now hide the login window and proceed
+            self.withdraw()
         else:
             messagebox.showerror("Invalid Credentials", "Invalid Credentials!")
             print("DEBUG: Invalid credentials for email:", email)

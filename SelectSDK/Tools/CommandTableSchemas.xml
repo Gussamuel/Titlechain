@@ -1,0 +1,10 @@
+﻿<SchemaCatalog xmlns="http://schemas.microsoft.com/xsd/catalog">
+  <Schema href="%InstallRoot%\Xml\Schemas\CommandTable.xsd"
+          targetNamespace="http://schemas.softprocorp.com/select/shell/commandtable/2008/02" />
+
+  <Schema href="%InstallRoot%\Xml\Schemas\CommandTableCodeGen.xsd"
+          targetNamespace="http://schemas.softprocorp.com/select/shell/commandtable/codegen/2008/03" />
+
+  <Association extension="ctd" schema="%InstallRoot%\Xml\Schemas\CommandTable.xsd" />
+  <Association extension="cts" schema="%InstallRoot%\Xml\Schemas\CommandTable.xsd" />
+</SchemaCatalog>

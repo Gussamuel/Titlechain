@@ -5,7 +5,7 @@ a = Analysis(
     ['TitleChain.py'],
     pathex=[],
     binaries=[],
-    datas=[('DLLs', 'DLLs'), ('nonDLLs', 'nonDLLs'), ('data', 'data')],
+    datas=[('SelectSDK', 'SelectSDK'), ('data', 'data')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

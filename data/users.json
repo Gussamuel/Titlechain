@@ -6,7 +6,8 @@
         "password": "password",
         "user_id": "7fee9d71-425d-4045-8570-a3361258146c",
         "can_create_db": true,
-        "default_server": "SAMPC\\SQLEXPRESS"
+        "default_server": "SAMPC\\SQLEXPRESS",
+        "default_select_server": "SAMPC\\SQLEXPRESS"
     },
     "collin.chappell@gmail.com": {
         "first_name": "Collin",

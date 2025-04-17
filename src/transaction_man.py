@@ -441,7 +441,7 @@ class TransactionManager(ttk.Frame):
         - After a successful submission, the blockchain response is parsed for
             the transaction ID which is then stored in the transaction dictionary.
         """
-        blockchain_url = "http://192.168.1.29:5000/transactions"
+        blockchain_url = "http://192.168.1.205:5000/transactions"
         
         # Convert Policy Date.
         policy_date_raw = transaction.get("Policy Date", "").strip()

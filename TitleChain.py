@@ -12,53 +12,25 @@ from src.login import LoginGUI
 # 1) Define all subdirectories under TitleChain where DLLs might live.
 #    These paths are relative to the TitleChain root folder (or sys._MEIPASS when frozen).
 DLL_SUBDIRS = [
-    r"DLLs\softpro.select.controls.sdk.4.5.5\lib\net46",
-    r"DLLs\softpro.select.core.sdk.4.5.5\lib\net46",
-    r"DLLs\softpro.select.plugin.sdk.4.6.8\build",
-    r"DLLs\softpro.select.server.sdk.4.6.8\build",
-    r"DLLs\softpro.select.shell.sdk.4.6.8\build",
-    r"nonDLLs\softpro.select.controls.4.6.8\lib\net46",
-    r"nonDLLs\softpro.select.core.4.6.8\lib\net46",
-    r"nonDLLs\softpro.select.plugin.4.5.5\build",
-    r"nonDLLs\softpro.select.server.core.4.6.8\lib\net46",
-    r"nonDLLs\softpro.select.shell.core.4.6.8\lib\net46",
+    r"SelectSDK\Libs"
 ]
 
 # 2) List of required DLL filenames.
 REQUIRED_DLLS = [
-    "SoftPro.OrderTracking.Controls.dll",
-    "SoftPro.OrderTracking.SnapSections.dll",
-    "SoftPro.Select.Controls.dll",
     "SoftPro.Accounting.Client.dll",
     "SoftPro.ClientModel.dll",
     "SoftPro.Documents.Client.dll",
     "SoftPro.EntityModel.dll",
     "SoftPro.Imaging.Client.dll",
     "SoftPro.OrderTracking.Client.dll",
+    "SoftPro.OrderTracking.Client.dll",
     "SoftPro.ProceedsTracking.Client.dll",
     "SoftPro.Register.Client.dll",
     "SoftPro.Reporting.Client.dll",
     "SoftPro.Select.Client.dll",
-    "Mono.Cecil.dll",
-    "Mono.Cecil.Mdb.dll",
-    "Mono.Cecil.Pdb.dll",
-    "Mono.Cecil.Rocks.dll",
-    "Newtonsoft.Json.dll",
-    "NuGet.Common.dll",
-    "NuGet.Configuration.dll",
-    "NuGet.Frameworks.dll",
-    "NuGet.Packaging.Core.dll",
-    "NuGet.Packaging.dll",
-    "NuGet.Versioning.dll",
-    "SoftPro.Select.Sdk.Tasks.dll",
-    "SoftPro.Accounting.Controls.dll",
-    "SoftPro.OrderTracking.Controls.dll",
-    "SoftPro.OrderTracking.SnapSections.dll",
-    "SoftPro.Select.OrderTracking.Shared.dll",
-    "SoftPro.PersistenceModel.dll",
     "SoftPro.Select.Service.dll",
-    "SoftPro.ServerModel.dll",
-    "SoftPro.Select.Shell.dll"
+    "SoftPro.PersistenceModel.dll",
+    "SoftPro.ServerModel.dll"
 ]
 
 # 3) Determine the base directory.
@@ -259,3 +231,5 @@ if __name__ == "__main__":
 # 17. First time data import from Rudy title DB to titlechainDB and blockchain
 #
 # 18. Softpro functions need to be done, outputs needs to be done
+#
+# 19. FIX SCHEDULED TASK EVENTUALLY
